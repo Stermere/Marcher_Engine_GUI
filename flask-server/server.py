@@ -23,9 +23,11 @@ def request_next_move():
     player = data['player']
     move = list(list(item.values()) for item in data['move'])
     difficulty = data['difficulty']
+    original_player = player
 
     # if the player just jumped, check if they can jump again
     if abs(move[0][0] - move[1][0]) == 2 and check_jump_required(board, player, piece=move[1]):
+        print("jump again")
         return jsonify({'board': board, 'player': player, 'moves': gameHandler.get_possible_moves(board, player)})
 
     # update the player to the bot
@@ -43,18 +45,19 @@ def request_next_move():
         time = 1.0
 
     # get the move from the engine
-    best_move, depth, leafs, eval_, hashes = gameHandler.get_move(board, player, time, ply)
+    while player == (1 if original_player == 2 else 2):
+        best_move, depth, leafs, eval_, hashes = gameHandler.get_move(board, player, time, ply)
 
-    # update the board with the move
-    jumped = update_board(best_move[0], best_move[1], board)
+        # update the board with the move
+        jumped = update_board(best_move[0], best_move[1], board)
 
-    # if the player just jumped, check if they can jump again and if so return the board
-    if jumped and check_jump_required(board, player, piece=best_move[1]):
-        return jsonify({'board': board, 'player': player, 'moves': gameHandler.get_possible_moves(board, player)})
+        # if the player just jumped, check if they can jump again and if so return the board
+        if jumped and check_jump_required(board, player, piece=best_move[1]):
+            continue
 
-    # update the player to the human
-    player = 1 if player == 2 else 2
-    possible_moves = gameHandler.get_possible_moves(board, player)
+        # update the player to the human
+        player = 1 if player == 2 else 2
+        possible_moves = gameHandler.get_possible_moves(board, player)
 
     return jsonify({'board': board, 'player': player, 'moves': possible_moves})
 

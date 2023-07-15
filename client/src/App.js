@@ -1,51 +1,63 @@
 import React, { useState, useEffect } from 'react' // import the React library
-import { Grid, Paper } from '@mui/material';
-import { convert_to_player_type } from './HelpfulFunctions.js'
+import { Grid, Paper, Box } from '@mui/material';
+import { convert_to_player_type, is_valid_move } from './HelpfulFunctions.js'
 
 function App() {
-  const [startSquare, setStartSquare] = useState(null)
-  const [endSquare, setEndSquare] = useState(null)
-
   const player1 = 1
   const player2 = 2
-  const [currentPlayer, setCurrentPlayer] = useState(player1)
+  
+  const [startSquare, setStartSquare] = useState(null)
+  const [endSquare, setEndSquare] = useState(null)
+  const [currentPlayer, setCurrentPlayer] = useState([])
+  const [lastPlayer, setLastPlayer] = useState([])
   const [board, setBoard] = useState([]);
   const [moveTable, setMoveTable] = useState([]);
-  const [difficulty, setDifficulty] = useState('medium');
+  const [difficulty, setDifficulty] = useState('master');
+
+  document.body.style.backgroundColor = "grey";
 
   // setup the game to be new when the page loads
   useEffect(() => {
     fetch('/get_board')
       .then(response => response.json())
-      .then(data => setBoard(data.board))
-      .then(setCurrentPlayer(player1))
+      .then(data => {setBoard(data.board);
+                    setMoveTable(data.moves);
+                    setCurrentPlayer(data.player);
+      })
       .catch(error => console.error('Error:', error));
   }, []);
 
 
   const handleCellClick = (row, col) => {
-    if (board[row][col] !== 0 && convert_to_player_type(board[row][col]) === currentPlayer) {
+    if (convert_to_player_type(board[row][col]) === currentPlayer) {
       setStartSquare({ row, col });
     }
-
-    else if (startSquare !== null) {
-      // check if this is in the move table 
-  
+    else if (startSquare !== null && is_valid_move(startSquare, { row, col }, moveTable)) {
       setEndSquare({ row, col });
     }
-
-    
   };
 
   useEffect(() => {
     // if we have a startSquare and endSquare, then we have a move
     // lets make the move and request the server to update the board
     if (startSquare !== null && endSquare !== null) {
-      // for now just swap the pieces
+      // update the board
       board[endSquare.row][endSquare.col] = board[startSquare.row][startSquare.col];
-      board[startSquare.row][startSquare.col] = '';
+      board[startSquare.row][startSquare.col] = 0;
+      if (Math.abs(startSquare.row - endSquare.row) === 2) {
+        const jumpedRow = (startSquare.row + endSquare.row) / 2;
+        const jumpedCol = (startSquare.col + endSquare.col) / 2;
+        board[jumpedRow][jumpedCol] = 0;
+      }
+      if (endSquare.row === 0 && board[endSquare.row][endSquare.col] === player1) {
+        board[endSquare.row][endSquare.col] = 3;
+      }
+      if (endSquare.row === 7 && board[endSquare.row][endSquare.col] === player2) {
+        board[endSquare.row][endSquare.col] = 4;
+      }
 
       // send the move to the server along with the current player and the board
+      setLastPlayer(currentPlayer);
       fetch('/request_move', {
         method: 'POST',
         body: JSON.stringify({
@@ -64,48 +76,47 @@ function App() {
         setBoard(data.board);
         setCurrentPlayer(data.player);
         setMoveTable(data.moves);
-
-        console.log(data);
       })
       .catch(error => {
         // Handle any errors that occurred during the request
         console.error('Error:', error);
       });
       
-
       // Reset startSquare and endSquare after the move
       setStartSquare(null);
       setEndSquare(null);
 
-
     }
   }, [startSquare, endSquare]);
 
-
-
   const renderCheckerboard = () => {
+    const pallet = {main: '#b4762b', secondary: '#dbc289', possibleMove: '#e3f2fd'};
     return board.map((row, rowIndex) => (
-      <Grid container spacing={0} key={rowIndex}>
+      <Box alignItems="flex-start" justifyContent="flex-start" display="flex" key={rowIndex}>
         {row.map((cell, colIndex) => (
-          <Grid item xs={1} key={colIndex}>
+          <Box
+            alignItems="flex-start"
+            justifyContent="flex-start"
+            item
+            xs={1}
+            key={colIndex}
+          >
             <Paper
               className="cell"
               onClick={() => handleCellClick(rowIndex, colIndex)}
               style={{
                 height: '100px',
                 width: '100px',
-                backgroundColor: (rowIndex + colIndex) % 2 === 0 ? 'white' : 'gray',
+                backgroundColor: (rowIndex + colIndex) % 2 === 0 ? pallet.main : pallet.secondary,
                 cursor: 'pointer',
                 position: 'relative',
               }}
             >
-              {(
-                <div
+              {convert_to_player_type(cell) === player1 || convert_to_player_type(cell) === player2 ? (
+                <Box
                   style={{
-                    backgroundColor: convert_to_player_type(cell) === player1
-                      ? 'red'
-                      : convert_to_player_type(cell) == player2
-                      ? 'black' : 'transparent',
+                    backgroundColor:
+                      convert_to_player_type(cell) === player1 ? (player1 === cell ? '#00433c' : '#00233c') : ( player2 === cell ? '#bc3031' : '#8c1031'),  
                     borderRadius: '50%',
                     height: '80%',
                     width: '80%',
@@ -115,19 +126,22 @@ function App() {
                     transform: 'translate(-50%, -50%)',
                   }}
                 />
-              )}
+              ) : null}
             </Paper>
-          </Grid>
+
+
+          </Box>
         ))}
-      </Grid>
+      </Box>
     ));
   };
+  
 
 
   return (
     <div>
-      <h1>Checkerboard</h1>
       {renderCheckerboard()}
+      <h2>Current Player: {currentPlayer}</h2>
     </div>
   );
 }

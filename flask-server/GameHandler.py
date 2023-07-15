@@ -27,14 +27,9 @@ class GameHandler:
     def get_possible_moves(self, board, player):
         jump_required = check_jump_required(board, player)
         
-        if jump_required:
-            return jump_required
-        else:
-            return generate_all_options(board, player, False)
+        return generate_all_options(board, player, jump_required)
         
     def get_start_board(self):
         return Board().board
         
-    
-
     
