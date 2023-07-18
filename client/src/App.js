@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react' // import the React library
 import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move } from './HelpfulFunctions.js'
+import './ToggleButtons.js'
 import './PieceAnimation.css'
+import './BackgroundColor.css'
+import DifficultyToggleButtons from './ToggleButtons';
 
 function App() {
   const player1 = 1
@@ -12,9 +15,9 @@ function App() {
   const [currentPlayer, setCurrentPlayer] = useState([])
   const [board, setBoard] = useState([]);
   const [moveTable, setMoveTable] = useState([]);
-  const [difficulty, setDifficulty] = useState('master');
+  const [difficulty, setDifficulty] = useState('easy');
 
-  document.body.style.backgroundColor = "grey";
+  document.body.style.backgroundColor = "grey"
 
   // setup the game to be new when the page loads
   useEffect(() => {
@@ -26,7 +29,6 @@ function App() {
       })
       .catch(error => console.error('Error:', error));
   }, []);
-
 
   const handleCellClick = (row, col) => {
     if (convert_to_player_type(board[row][col]) === currentPlayer) {
@@ -56,10 +58,7 @@ function App() {
         board[endSquare.row][endSquare.col] = 4;
       }
 
-
-
       setMoveTable([]);
-
 
       // send the move to the server along with the current player and the board
       fetch('/request_move', {
@@ -158,7 +157,7 @@ function App() {
       player2king: '#00233c',
       };
     return board.map((row, rowIndex) => (
-      <Box alignItems="flex-start" justifyContent="flex-start" display="flex" key={rowIndex}>
+      <Box alignItems="center" justifyContent="center" display="flex" key={rowIndex}>
         {row.map((cell, colIndex) => (
           <Box
             alignItems="flex-start"
@@ -193,9 +192,9 @@ function App() {
 
 
   return (
-    <div>
-      {renderCheckerboard()}
-      <h2>level: {difficulty}</h2>
+    <div className={`smooth-transition bg-${difficulty}`}>
+      {renderCheckerboard()} 
+      <DifficultyToggleButtons difficulty={difficulty} setDifficulty={setDifficulty} />
     </div>
   );
 }

@@ -33,9 +33,9 @@ def request_next_move():
 
     time = 0.1
     if difficulty == "easy":
-        ply = 3
+        ply = 1
     elif difficulty == "medium":
-        ply = 6
+        ply = 3
     elif difficulty == "hard":
         ply = 8
     elif difficulty == "master":

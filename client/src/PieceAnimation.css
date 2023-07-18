@@ -16,3 +16,12 @@
     transform: translate(-50%, -50%) scale(1);
   }
 }
+
+@keyframes backgroundAnimation {
+  from {
+    background-color: /* initial color */;
+  }
+  to {
+    background-color: /* final color */;
+  }
+}
