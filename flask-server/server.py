@@ -21,13 +21,11 @@ def request_next_move():
 
     board = data['board']
     player = data['player']
-    move = list(list(item.values()) for item in data['move'])
+    move = tuple(tuple(item.values()) for item in data['move'])
     difficulty = data['difficulty']
     original_player = player
 
-    # if the player just jumped, check if they can jump again
-    if abs(move[0][0] - move[1][0]) == 2 and check_jump_required(board, player, piece=move[1]):
-        print("jump again")
+    if abs(move[0][0] - move[1][0]) == 2 and any([(item[0] == move[1] and abs(item[0][0] - item[1][0]) == 2) for item in gameHandler.get_possible_moves(board, player)]):
         return jsonify({'board': board, 'player': player, 'moves': gameHandler.get_possible_moves(board, player)})
 
     # update the player to the bot

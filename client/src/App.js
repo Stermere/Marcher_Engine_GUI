@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react' // import the React library
-import { Grid, Paper, Box } from '@mui/material';
+import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move } from './HelpfulFunctions.js'
+import './PieceAnimation.css'
 
 function App() {
   const player1 = 1
@@ -9,7 +10,6 @@ function App() {
   const [startSquare, setStartSquare] = useState(null)
   const [endSquare, setEndSquare] = useState(null)
   const [currentPlayer, setCurrentPlayer] = useState([])
-  const [lastPlayer, setLastPlayer] = useState([])
   const [board, setBoard] = useState([]);
   const [moveTable, setMoveTable] = useState([]);
   const [difficulty, setDifficulty] = useState('master');
@@ -30,10 +30,10 @@ function App() {
 
   const handleCellClick = (row, col) => {
     if (convert_to_player_type(board[row][col]) === currentPlayer) {
-      setStartSquare({ row, col });
+      setStartSquare({ col, row });
     }
     else if (startSquare !== null && is_valid_move(startSquare, { row, col }, moveTable)) {
-      setEndSquare({ row, col });
+      setEndSquare({ col, row });
     }
   };
 
@@ -56,8 +56,12 @@ function App() {
         board[endSquare.row][endSquare.col] = 4;
       }
 
+
+
+      setMoveTable([]);
+
+
       // send the move to the server along with the current player and the board
-      setLastPlayer(currentPlayer);
       fetch('/request_move', {
         method: 'POST',
         body: JSON.stringify({
@@ -81,7 +85,7 @@ function App() {
         // Handle any errors that occurred during the request
         console.error('Error:', error);
       });
-      
+
       // Reset startSquare and endSquare after the move
       setStartSquare(null);
       setEndSquare(null);
@@ -89,8 +93,70 @@ function App() {
     }
   }, [startSquare, endSquare]);
 
+  const renderMoveIndicator = (rowIndex, colIndex, color) => {
+    const shouldRenderCircle = is_valid_move(startSquare, { row:rowIndex, col:colIndex }, moveTable);
+
+    if (shouldRenderCircle) {
+      return (
+        <div
+          className="small-circle"
+          style={{
+            backgroundColor: color, // Customize the background color of the small circle
+            borderRadius: '50%',
+            height: '25px',
+            width: '25px',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+      );
+    }
+
+    return null;
+  };
+
+  const renderPiece = (rowIndex, colIndex, cell, pallet) => {
+    const shouldRenderPiece =
+      convert_to_player_type(board[rowIndex][colIndex]) === player1 ||
+      convert_to_player_type(board[rowIndex][colIndex]) === player2;
+  
+    return (
+      <Box
+        className="piece"
+        elevation={24}
+        style={{
+          backgroundColor:
+            convert_to_player_type(cell) === player1
+              ? player1 === cell
+                ? pallet.player1
+                : pallet.player1king
+              : player2 === cell
+              ? pallet.player2
+              : pallet.player2king,
+          borderRadius: "50%",
+          height: shouldRenderPiece ? "80%" : "0%",
+          width: shouldRenderPiece ? "80%" : "0%", 
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          transition: "width 0.3s, height 0.3s",
+        }}
+      />
+    );
+  };
+
   const renderCheckerboard = () => {
-    const pallet = {main: '#b4762b', secondary: '#dbc289', possibleMove: '#e3f2fd'};
+    const pallet = {main: '#b4762b',
+      secondary: '#dbc289',
+      possibleMove: '#e3f2fd',
+      player1: '#bc3031',
+      player1king: '#8c1031',
+      player2: '#00433c',
+      player2king: '#00233c',
+      };
     return board.map((row, rowIndex) => (
       <Box alignItems="flex-start" justifyContent="flex-start" display="flex" key={rowIndex}>
         {row.map((cell, colIndex) => (
@@ -104,6 +170,7 @@ function App() {
             <Paper
               className="cell"
               onClick={() => handleCellClick(rowIndex, colIndex)}
+              elevation={12}
               style={{
                 height: '100px',
                 width: '100px',
@@ -112,21 +179,8 @@ function App() {
                 position: 'relative',
               }}
             >
-              {convert_to_player_type(cell) === player1 || convert_to_player_type(cell) === player2 ? (
-                <Box
-                  style={{
-                    backgroundColor:
-                      convert_to_player_type(cell) === player1 ? (player1 === cell ? '#00433c' : '#00233c') : ( player2 === cell ? '#bc3031' : '#8c1031'),  
-                    borderRadius: '50%',
-                    height: '80%',
-                    width: '80%',
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                  }}
-                />
-              ) : null}
+              {renderPiece(rowIndex, colIndex, cell, pallet)}
+              {renderMoveIndicator(rowIndex, colIndex, pallet.possibleMove)}
             </Paper>
 
 
@@ -141,7 +195,7 @@ function App() {
   return (
     <div>
       {renderCheckerboard()}
-      <h2>Current Player: {currentPlayer}</h2>
+      <h2>level: {difficulty}</h2>
     </div>
   );
 }
