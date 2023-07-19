@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react' // import the React library
 import { Paper, Box } from '@mui/material';
-import { convert_to_player_type, is_valid_move } from './HelpfulFunctions.js'
+import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square } from './HelpfulFunctions.js'
+import DifficultyToggleButtons from './ToggleButtons';
 import './ToggleButtons.js'
 import './PieceAnimation.css'
 import './BackgroundColor.css'
-import DifficultyToggleButtons from './ToggleButtons';
+import './IndicatorPiece.css'
+import './ValidPieceIndicator.css'
+
+import king from './king.png'; // with import
 
 function App() {
   const player1 = 1
@@ -16,6 +20,7 @@ function App() {
   const [board, setBoard] = useState([]);
   const [moveTable, setMoveTable] = useState([]);
   const [difficulty, setDifficulty] = useState('easy');
+  const [waitingOnServer, setWaitingOnServer] = useState(true);
 
   document.body.style.backgroundColor = "grey"
 
@@ -31,7 +36,7 @@ function App() {
   }, []);
 
   const handleCellClick = (row, col) => {
-    if (convert_to_player_type(board[row][col]) === currentPlayer) {
+    if (convert_to_player_type(board[row][col]) === currentPlayer && is_valid_start_square({ row, col }, moveTable)) {
       setStartSquare({ col, row });
     }
     else if (startSquare !== null && is_valid_move(startSquare, { row, col }, moveTable)) {
@@ -58,7 +63,17 @@ function App() {
         board[endSquare.row][endSquare.col] = 4;
       }
 
-      setMoveTable([]);
+      // clear the move indicator from that square
+      const newMoveTable = [];
+      for (let i = 0; i < moveTable.length; i++) {
+        if (moveTable[i][0][0] !== startSquare.col || moveTable[i][0][1] !== startSquare.row) {
+          newMoveTable.push(moveTable[i]);
+        }
+      }
+      newMoveTable.push([[-1, -1], [-1, -1]]);
+      setWaitingOnServer(true);
+      setMoveTable(newMoveTable);
+      
 
       // send the move to the server along with the current player and the board
       fetch('/request_move', {
@@ -88,55 +103,36 @@ function App() {
       // Reset startSquare and endSquare after the move
       setStartSquare(null);
       setEndSquare(null);
+      setWaitingOnServer(false);
 
     }
+
+
   }, [startSquare, endSquare]);
 
-  const renderMoveIndicator = (rowIndex, colIndex, color) => {
-    const shouldRenderCircle = is_valid_move(startSquare, { row:rowIndex, col:colIndex }, moveTable);
-
-    if (shouldRenderCircle) {
-      return (
-        <div
-          className="small-circle"
-          style={{
-            backgroundColor: color, // Customize the background color of the small circle
-            borderRadius: '50%',
-            height: '25px',
-            width: '25px',
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        />
-      );
+  useEffect(() => {
+    if (moveTable.length <= 0) {
+      return;
     }
+    console.log(moveTable)
+    if (is_only_option({ col:moveTable[0][0][0], row:moveTable[0][0][1] }, moveTable) && !waitingOnServer) {
+      setStartSquare({ col:moveTable[0][0][0], row:moveTable[0][0][1] });
+    }
+  }, [moveTable]);
 
-    return null;
-  };
+  const renderAvaliablePiece = (rowIndex, colIndex, color) => {
+    const isValid = is_valid_start_square({ row:rowIndex, col:colIndex }, moveTable);
 
-  const renderPiece = (rowIndex, colIndex, cell, pallet) => {
-    const shouldRenderPiece =
-      convert_to_player_type(board[rowIndex][colIndex]) === player1 ||
-      convert_to_player_type(board[rowIndex][colIndex]) === player2;
-  
     return (
       <Box
-        className="piece"
+        className="validPieceIndicator"
         elevation={24}
         style={{
-          backgroundColor:
-            convert_to_player_type(cell) === player1
-              ? player1 === cell
-                ? pallet.player1
-                : pallet.player1king
-              : player2 === cell
-              ? pallet.player2
-              : pallet.player2king,
+          backgroundColor: color,
+          opacity: .15,
           borderRadius: "50%",
-          height: shouldRenderPiece ? "80%" : "0%",
-          width: shouldRenderPiece ? "80%" : "0%", 
+          height: isValid ? "50%" : "0%",
+          width: isValid ? "50%" : "0%", 
           position: "absolute",
           top: "50%",
           left: "50%",
@@ -147,14 +143,84 @@ function App() {
     );
   };
 
+  const renderMoveIndicator = (rowIndex, colIndex, color) => {
+    const shouldRenderCircle = is_valid_move(startSquare, { row:rowIndex, col:colIndex }, moveTable);
+
+    return (
+      <Box
+        className="indicatorPiece"
+        elevation={24}
+        style={{
+          backgroundColor: color,
+          borderRadius: "50%",
+          height: shouldRenderCircle ? "20%" : "0%",
+          width: shouldRenderCircle ? "20%" : "0%", 
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          transition: "width 0.1s, height 0.1s",
+        }}
+      />
+    );
+  };
+
+  const renderPiece = (rowIndex, colIndex, cell, pallet) => {
+    const shouldRenderPiece =
+      convert_to_player_type(board[rowIndex][colIndex]) === player1 ||
+      convert_to_player_type(board[rowIndex][colIndex]) === player2;
+
+    const isKing = (cell === 3 || cell === 4)
+  
+    return (
+      <div>
+        <Box
+          className="piece"
+          elevation={24}
+          style={{
+            backgroundColor:
+              convert_to_player_type(cell) === player1
+                ? pallet.player1
+                : convert_to_player_type(cell) === player2
+                  ? pallet.player2 
+                  : pallet.pieceTransition,
+            borderRadius: "50%",
+            height: shouldRenderPiece ? "80%" : "0%",
+            width: shouldRenderPiece ? "80%" : "0%", 
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            transition: "width 0.3s, height 0.3s",
+            
+          }}
+        />
+        <Box
+        className='piece'
+        component="img"
+        sx={{
+          height: isKing ? "50%" : "0%",
+          width: isKing ? "100%" : "0%", 
+        }}
+        src={king}
+        style={{
+          position: "absolute",
+          transform: "translate(-50%, -50%)",
+          transition: "width 0.3s, height 0.3s",
+        }}
+      />
+      </div>
+    );
+  };
+
   const renderCheckerboard = () => {
     const pallet = {main: '#b4762b',
       secondary: '#dbc289',
       possibleMove: '#e3f2fd',
       player1: '#bc3031',
-      player1king: '#8c1031',
       player2: '#00433c',
-      player2king: '#00233c',
+      pieceTransition: '#00233c',
+      pieceAvailableIndicator: '#ffee57',
       };
     return board.map((row, rowIndex) => (
       <Box alignItems="center" justifyContent="center" display="flex" key={rowIndex}>
@@ -180,6 +246,7 @@ function App() {
             >
               {renderPiece(rowIndex, colIndex, cell, pallet)}
               {renderMoveIndicator(rowIndex, colIndex, pallet.possibleMove)}
+              {renderAvaliablePiece(rowIndex, colIndex, pallet.pieceAvailableIndicator)}
             </Paper>
 
 

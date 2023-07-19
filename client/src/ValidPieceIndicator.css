@@ -1,0 +1,19 @@
+.validPieceIndicator {
+    animation: scale 0.3s ease-in-out both; /* Add animation property with timing function */
+    transform-origin: center; /* Set the transform origin to the center */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  @keyframes scale {
+    0% {
+      transform: translate(-50%, -50%) scale(0);
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  

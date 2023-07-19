@@ -23,3 +23,25 @@ export function is_valid_move(startSquare, endSquare, moveList) {
 
     return false;
 }
+
+// checks if a start square is the only option for a move
+export function is_only_option(startSquare, moveList) {
+    for (let i = 0; i < moveList.length; i++) {
+        if (moveList[i][0][0] !== startSquare.col || moveList[i][0][1] !== startSquare.row) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+// checks if the start square is a valid start square
+export function is_valid_start_square(startSquare, moveList) {
+    for (let i = 0; i < moveList.length; i++) {
+        if (moveList[i][0][0] === startSquare.col && moveList[i][0][1] === startSquare.row) {
+            return true;
+        }
+    }
+
+    return false;
+}

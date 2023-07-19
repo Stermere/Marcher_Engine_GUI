@@ -24,29 +24,29 @@ function DifficultyToggleButtons({ difficulty, setDifficulty }) {
       >
         <ToggleButton value="easy" aria-label="left aligned">
           <ThemeProvider theme={theme}>
-            <Typography variant="h8" component="div" style={{ textTransform: 'none' }}>
+            <Typography variant="h8" component="div" style={{ textTransform: 'none' }} color={theme.palette.primary.dark}>
               Easy (Depth 1)
             </Typography>
           </ThemeProvider>
         </ToggleButton>
         <ToggleButton value="medium" aria-label="centered">
         <ThemeProvider theme={theme}>
-        <Typography variant="h8" component="div" style={{ textTransform: 'none' }}>
+        <Typography variant="h8" component="div" style={{ textTransform: 'none' }} color={theme.palette.primary.dark}>
               Medium (Depth 3)
             </Typography>
           </ThemeProvider>
         </ToggleButton>
-        <ToggleButton value="hard" aria-label="right aligned">
+        <ToggleButton value="hard" aria-label="right aligned" >
         <ThemeProvider theme={theme}>
-          <Typography variant="h8" component="div" style={{ textTransform: 'none' }}>
+          <Typography variant="h8" component="div" style={{ textTransform: 'none' }} color={theme.palette.primary.dark}>
               Hard (Depth 8)
             </Typography>
           </ThemeProvider>
         </ToggleButton>
         <ToggleButton value="master" aria-label="right aligned">
         <ThemeProvider theme={theme}>
-          <Typography variant="h8" component="div" style={{ textTransform: 'none' }}>
-              Master (1 second per move)
+          <Typography variant="h8" component="div" style={{ textTransform: 'none' }} color={theme.palette.primary.dark}>
+              Master (Depth 15+)
             </Typography>
           </ThemeProvider>
         </ToggleButton>
