@@ -40,7 +40,7 @@ def request_next_move():
         ply = 8
     elif difficulty == "master":
         ply = 30
-        time = 0.5
+        time = 1
 
     # get the move from the engine
     while player == (1 if original_player == 2 else 2):

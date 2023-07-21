@@ -3,19 +3,18 @@
     height: 100vh;
   }
   
-  /* Define the different background colors for different difficulties */
   .bg-master {
-    background-color: #3d1212; /* Replace with your first color */
+    background-color: #3d1212;
   }
   
   .bg-hard {
-    background-color: #552e1f; /* Replace with your second color */
+    background-color: #552e1f;
   }
   
   .bg-medium {
-    background-color: #172538; /* Replace with your third color */
+    background-color: #172538;
   }
   
   .bg-easy {
-    background-color: #23421c; /* Replace with your fourth color */
+    background-color: #23421c;
   }

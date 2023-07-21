@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react' // import the React library
+import React, { useState, useEffect, useRef } from 'react'
 import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square } from './HelpfulFunctions.js'
-import DifficultyToggleButtons from './ToggleButtons';
+import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
 import './ToggleButtons.js'
 import './PieceAnimation.css'
 import './BackgroundColor.css'
@@ -21,6 +21,7 @@ function App() {
   const [moveTable, setMoveTable] = useState([]);
   const [difficulty, setDifficulty] = useState('easy');
   const [waitingOnServer, setWaitingOnServer] = useState(true);
+  const [moveStack, setMoveStack] = useState([]);
 
   document.body.style.backgroundColor = "grey"
 
@@ -35,6 +36,32 @@ function App() {
       .catch(error => console.error('Error:', error));
   }, []);
 
+  const restartGame = () => {
+    fetch('/get_board')
+      .then(response => response.json())
+      .then(data => {setBoard(data.board);
+                    setMoveTable(data.moves);
+                    setCurrentPlayer(data.player);
+      })
+      .catch(error => console.error('Error:', error));
+
+      setStartSquare(null);
+      setMoveStack([]);
+  }
+
+  const undoMove = () => {
+    if (moveStack.length > 0) {
+      const lastState = moveStack[moveStack.length - 1];
+      const tempMoveStack = moveStack;
+      tempMoveStack.pop();
+      setMoveStack(tempMoveStack);
+      setBoard(lastState.board);
+      setMoveTable(lastState.moves);
+      setCurrentPlayer(lastState.player);
+      setStartSquare(null);
+    }
+  }
+      
   const handleCellClick = (row, col) => {
     if (convert_to_player_type(board[row][col]) === currentPlayer && is_valid_start_square({ row, col }, moveTable)) {
       setStartSquare({ col, row });
@@ -48,6 +75,13 @@ function App() {
     // if we have a startSquare and endSquare, then we have a move
     // lets make the move and request the server to update the board
     if (startSquare !== null && endSquare !== null) {
+      // push to the move stack
+      const tempMoveStack = moveStack
+      tempMoveStack.push({ board:structuredClone(board), moves: moveTable, player: currentPlayer })
+      setMoveStack(tempMoveStack);
+
+
+
       // update the board
       board[endSquare.row][endSquare.col] = board[startSquare.row][startSquare.col];
       board[startSquare.row][startSquare.col] = 0;
@@ -114,7 +148,6 @@ function App() {
     if (moveTable.length <= 0) {
       return;
     }
-    console.log(moveTable)
     if (is_only_option({ col:moveTable[0][0][0], row:moveTable[0][0][1] }, moveTable) && !waitingOnServer) {
       setStartSquare({ col:moveTable[0][0][0], row:moveTable[0][0][1] });
     }
@@ -256,12 +289,12 @@ function App() {
     ));
   };
   
-
-
   return (
     <div className={`smooth-transition bg-${difficulty}`}>
       {renderCheckerboard()} 
       <DifficultyToggleButtons difficulty={difficulty} setDifficulty={setDifficulty} />
+      <GoBackOneMoveButton goBackOneMove={undoMove} />
+      <RestartGameButton restartGame={restartGame} />
     </div>
   );
 }
