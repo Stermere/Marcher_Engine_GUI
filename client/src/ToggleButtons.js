@@ -88,7 +88,17 @@ function RestartGameButton({ restartGame }) {
   );
 }
 
-function GoBackOneMoveButton({ goBackOneMove }) {
+function GoBackOneMoveButton({ goBackOneMove, goForwardOneMove }) {
+  const handleChanges = (event, newChanges) => {
+    if (newChanges !== null) {
+      if (newChanges === 'goBackOneMove') {
+        goBackOneMove();
+      } else if (newChanges === 'goForwardOneMove') {
+        goForwardOneMove();
+      }
+    }
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Stack direction="row" spacing={4} justifyContent="center" alignItems="center">
@@ -98,11 +108,16 @@ function GoBackOneMoveButton({ goBackOneMove }) {
           aria-label="text alignment"
           size="medium"
           alignItems="center"
-          onChange={goBackOneMove}
+          onChange={handleChanges}
         >
           <ToggleButton value="goBackOneMove" aria-label="centered" sx={{ borderWidth:'2px', }}>
             <Typography variant="h8" component="div" style={{ textTransform: 'none' }} color={theme.text.primary.main}>
               Go Back One Move
+            </Typography>
+          </ToggleButton>
+          <ToggleButton value="goForwardOneMove" aria-label="centered" sx={{ borderWidth:'2px', }}>
+            <Typography variant="h8" component="div" style={{ textTransform: 'none' }} color={theme.text.primary.main}>
+              Go Forward One Move
             </Typography>
           </ToggleButton>
         </ToggleButtonGroup>

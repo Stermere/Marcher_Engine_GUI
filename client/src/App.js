@@ -22,8 +22,9 @@ function App() {
   const [difficulty, setDifficulty] = useState('easy');
   const [waitingOnServer, setWaitingOnServer] = useState(true);
   const [moveStack, setMoveStack] = useState([]);
+  const [moveStackPointer, setMoveStackPointer] = useState(0);
 
-  document.body.style.backgroundColor = "grey"
+  document.body.style.backgroundColor = "grey";
 
   // setup the game to be new when the page loads
   useEffect(() => {
@@ -32,6 +33,7 @@ function App() {
       .then(data => {setBoard(data.board);
                     setMoveTable(data.moves);
                     setCurrentPlayer(data.player);
+                    setMoveStack([{board:structuredClone(data.board), moves: data.moves, player: data.player}]);
       })
       .catch(error => console.error('Error:', error));
   }, []);
@@ -42,25 +44,36 @@ function App() {
       .then(data => {setBoard(data.board);
                     setMoveTable(data.moves);
                     setCurrentPlayer(data.player);
+                    setMoveStack([{board:structuredClone(data.board), moves: data.moves, player: data.player}]);
       })
       .catch(error => console.error('Error:', error));
 
       setStartSquare(null);
-      setMoveStack([]);
+      setMoveStackPointer(0);
   }
 
   const undoMove = () => {
-    if (moveStack.length > 0) {
-      const lastState = moveStack[moveStack.length - 1];
-      const tempMoveStack = moveStack;
-      tempMoveStack.pop();
-      setMoveStack(tempMoveStack);
-      setBoard(lastState.board);
-      setMoveTable(lastState.moves);
+    if (moveStackPointer > 0) {
+      const lastState = moveStack[moveStackPointer - 1];
+      setBoard(structuredClone(lastState.board));
+      setMoveTable(structuredClone(lastState.moves));
       setCurrentPlayer(lastState.player);
+      setMoveStackPointer(moveStackPointer - 1);
       setStartSquare(null);
     }
-  }
+  };
+
+  const redoMove = () => {
+    if (moveStackPointer < moveStack.length - 1) {
+      const nextState = moveStack[moveStackPointer + 1];
+      setBoard(structuredClone(nextState.board));
+      setMoveTable(structuredClone(nextState.moves));
+      setCurrentPlayer(nextState.player);
+      setStartSquare(null);
+      setMoveStackPointer(moveStackPointer + 1);
+    }
+  };
+
       
   const handleCellClick = (row, col) => {
     if (convert_to_player_type(board[row][col]) === currentPlayer && is_valid_start_square({ row, col }, moveTable)) {
@@ -75,13 +88,6 @@ function App() {
     // if we have a startSquare and endSquare, then we have a move
     // lets make the move and request the server to update the board
     if (startSquare !== null && endSquare !== null) {
-      // push to the move stack
-      const tempMoveStack = moveStack
-      tempMoveStack.push({ board:structuredClone(board), moves: moveTable, player: currentPlayer })
-      setMoveStack(tempMoveStack);
-
-
-
       // update the board
       board[endSquare.row][endSquare.col] = board[startSquare.row][startSquare.col];
       board[startSquare.row][startSquare.col] = 0;
@@ -107,7 +113,8 @@ function App() {
       newMoveTable.push([[-1, -1], [-1, -1]]);
       setWaitingOnServer(true);
       setMoveTable(newMoveTable);
-      
+
+      const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
 
       // send the move to the server along with the current player and the board
       fetch('/request_move', {
@@ -128,17 +135,21 @@ function App() {
         setBoard(data.board);
         setCurrentPlayer(data.player);
         setMoveTable(data.moves);
+        tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player })
       })
       .catch(error => {
         // Handle any errors that occurred during the request
         console.error('Error:', error);
       });
 
+      // push to the move stack
+      setMoveStack(tempMoveStack);
+      setMoveStackPointer(moveStackPointer + 1);
+
       // Reset startSquare and endSquare after the move
       setStartSquare(null);
       setEndSquare(null);
       setWaitingOnServer(false);
-
     }
 
 
@@ -293,7 +304,7 @@ function App() {
     <div className={`smooth-transition bg-${difficulty}`}>
       {renderCheckerboard()} 
       <DifficultyToggleButtons difficulty={difficulty} setDifficulty={setDifficulty} />
-      <GoBackOneMoveButton goBackOneMove={undoMove} />
+      <GoBackOneMoveButton goBackOneMove={undoMove} goForwardOneMove={redoMove} />
       <RestartGameButton restartGame={restartGame} />
     </div>
   );
