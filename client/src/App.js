@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square } from './HelpfulFunctions.js'
 import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
+import CheckersRules from './CheckersRules.js';
 import './ToggleButtons.js'
 import './PieceAnimation.css'
 import './BackgroundColor.css'
@@ -24,7 +25,7 @@ function App() {
   const [moveStack, setMoveStack] = useState([]);
   const [moveStackPointer, setMoveStackPointer] = useState(0);
 
-  document.body.style.backgroundColor = "grey";
+  document.body.style.backgroundColor = "lightblue";
 
   // setup the game to be new when the page loads
   useEffect(() => {
@@ -306,6 +307,7 @@ function App() {
       <DifficultyToggleButtons difficulty={difficulty} setDifficulty={setDifficulty} />
       <GoBackOneMoveButton goBackOneMove={undoMove} goForwardOneMove={redoMove} />
       <RestartGameButton restartGame={restartGame} />
+      <CheckersRules />
     </div>
   );
 }
