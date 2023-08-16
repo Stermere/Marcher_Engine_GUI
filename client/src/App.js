@@ -240,7 +240,7 @@ function App() {
             
           }}
         />
-        <div
+        <Box
         className='piece'
         component="img"
         sx={{
