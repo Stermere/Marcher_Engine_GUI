@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square } from './HelpfulFunctions.js'
 import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
@@ -29,7 +29,7 @@ function App() {
 
   // setup the game to be new when the page loads
   useEffect(() => {
-    fetch('/get_board')
+    fetch('/api/get_board')
       .then(response => response.json())
       .then(data => {setBoard(data.board);
                     setMoveTable(data.moves);
@@ -40,7 +40,7 @@ function App() {
   }, []);
 
   const restartGame = () => {
-    fetch('/get_board')
+    fetch('/api/get_board')
       .then(response => response.json())
       .then(data => {setBoard(data.board);
                     setMoveTable(data.moves);
@@ -118,7 +118,7 @@ function App() {
       const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
 
       // send the move to the server along with the current player and the board
-      fetch('/request_move', {
+      fetch('/api/request_move', {
         method: 'POST',
         body: JSON.stringify({
           board: board,
@@ -169,7 +169,7 @@ function App() {
     const isValid = is_valid_start_square({ row:rowIndex, col:colIndex }, moveTable);
 
     return (
-      <Box
+      <div
         className="validPieceIndicator"
         elevation={24}
         style={{
@@ -192,7 +192,7 @@ function App() {
     const shouldRenderCircle = is_valid_move(startSquare, { row:rowIndex, col:colIndex }, moveTable);
 
     return (
-      <Box
+      <div
         className="indicatorPiece"
         elevation={24}
         style={{
@@ -219,7 +219,7 @@ function App() {
   
     return (
       <div>
-        <Box
+        <div
           className="piece"
           elevation={24}
           style={{
@@ -240,7 +240,7 @@ function App() {
             
           }}
         />
-        <Box
+        <div
         className='piece'
         component="img"
         sx={{
@@ -282,8 +282,8 @@ function App() {
               onClick={() => handleCellClick(rowIndex, colIndex)}
               elevation={12}
               style={{
-                height: '100px',
-                width: '100px',
+                height: 'min(12.5vw, 8vh)',
+                width: 'min(12.5vw, 8vh)',
                 backgroundColor: (rowIndex + colIndex) % 2 === 0 ? pallet.main : pallet.secondary,
                 cursor: 'pointer',
                 position: 'relative',
