@@ -1,21 +1,32 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, send_from_directory
 from GameHandler import GameHandler
 from BoardOpperations import update_board, check_jump_required
+from flask_cors import CORS
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../client/build', template_folder='../client/build')
+CORS(app)
 
 gameHandler = GameHandler()
 
+# Serve React App
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
-@app.route("/get_board", methods=['GET'])
+@app.route("/api/get_board", methods=['GET'])
 def get_board():
     return jsonify({"board": gameHandler.get_start_board(),
                     "player": 1,
                     "moves": gameHandler.get_possible_moves(gameHandler.get_start_board(), 1)})
 
-# takes a board, player, and difficulty and returns the best move and a list of all possible moves 
+# Takes a board, player, and difficulty and returns the best move and a list of all possible moves 
 # that the player could make
-@app.route('/request_move', methods=['POST'])
+@app.route('/api/request_move', methods=['POST'])
 def request_next_move():
     data = request.get_json()
 
@@ -31,7 +42,7 @@ def request_next_move():
     # update the player to the bot
     player = 1 if player == 2 else 2
 
-    time = 0.1
+    time = 0.25
     if difficulty == "easy":
         ply = 1
     elif difficulty == "medium":
@@ -39,8 +50,7 @@ def request_next_move():
     elif difficulty == "hard":
         ply = 8
     elif difficulty == "master":
-        ply = 50
-        time = 1
+        ply = 25
 
     # get the move from the engine
     while player == (1 if original_player == 2 else 2):
@@ -61,4 +71,4 @@ def request_next_move():
 
 # Run Server
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False, host='0.0.0.0', threaded=True)
