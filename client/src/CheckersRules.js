@@ -14,7 +14,7 @@ const CheckersRules = () => {
         },
     });
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+    <div style={{ display: 'grid', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
       <div>
         <Typography variant="h6" gutterBottom style={{ color: theme.text.primary.main }}>
           Rules of Checkers:
