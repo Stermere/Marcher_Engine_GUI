@@ -137,6 +137,7 @@ function App() {
         setCurrentPlayer(data.player);
         setMoveTable(data.moves);
         tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player })
+        console.log(data.searchInfo)
       })
       .catch(error => {
         // Handle any errors that occurred during the request
@@ -282,8 +283,8 @@ function App() {
               onClick={() => handleCellClick(rowIndex, colIndex)}
               elevation={12}
               style={{
-                height: 'min(12.5vw, 8vh)',
-                width: 'min(12.5vw, 8vh)',
+                height: 'min(12.5vw, 9vh)',
+                width: 'min(12.5vw, 9vh)',
                 backgroundColor: (rowIndex + colIndex) % 2 === 0 ? pallet.main : pallet.secondary,
                 cursor: 'pointer',
                 position: 'relative',

@@ -48,12 +48,11 @@ const CheckersRules = () => {
           4. Winning:
           <ul>
             <li>
-              The game ends when one of the following conditions is met:
-              <ol>
-                <li>A player loses all of their pieces due to captures by their opponent.</li>
-                <li>A player has no legal moves left for any of their pieces.</li>
-              </ol>
+              The game ends when either of the following conditions are met:
             </li>
+            <li>A player loses all of their pieces due to captures by their opponent.</li>
+            <li>A player has no legal moves left for any of their pieces.</li>
+
           </ul>
         </Typography>
       </div>

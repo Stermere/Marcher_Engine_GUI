@@ -50,11 +50,15 @@ def request_next_move():
     elif difficulty == "hard":
         ply = 8
     elif difficulty == "master":
-        ply = 25
+        ply = 50
+
+    search_info = {'depth': 0, 'eval': 0}
 
     # get the move from the engine
     while player == (1 if original_player == 2 else 2):
         best_move, depth, leafs, eval_, hashes = gameHandler.get_move(board, player, time, ply)
+        search_info['depth'] = depth
+        search_info['eval'] = eval_
 
         # update the board with the move
         jumped = update_board(best_move[0], best_move[1], board)
@@ -67,7 +71,7 @@ def request_next_move():
         player = 1 if player == 2 else 2
         possible_moves = gameHandler.get_possible_moves(board, player)
 
-    return jsonify({'board': board, 'player': player, 'moves': possible_moves})
+    return jsonify({'board': board, 'player': player, 'moves': possible_moves, 'searchInfo': search_info})
 
 # Run Server
 if __name__ == '__main__':
