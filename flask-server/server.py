@@ -42,7 +42,7 @@ def request_next_move():
     # update the player to the bot
     player = 1 if player == 2 else 2
 
-    time = 0.25
+    time = 0.75
     if difficulty == "easy":
         ply = 1
     elif difficulty == "medium":
@@ -52,13 +52,15 @@ def request_next_move():
     elif difficulty == "master":
         ply = 50
 
-    search_info = {'depth': 0, 'eval': 0}
+    search_info = {'depth': 0, 'depthExtended': 0, 'eval': 0}
 
     # get the move from the engine
     while player == (1 if original_player == 2 else 2):
-        best_move, depth, leafs, eval_, hashes = gameHandler.get_move(board, player, time, ply)
+        best_move, depth, depth_extended, leafs, eval_, hashes = gameHandler.get_move(board, player, time, ply)
         search_info['depth'] = depth
+        search_info['depthExtended'] = depth_extended
         search_info['eval'] = eval_
+
 
         # update the board with the move
         jumped = update_board(best_move[0], best_move[1], board)
