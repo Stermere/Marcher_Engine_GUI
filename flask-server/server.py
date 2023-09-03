@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
 from GameHandler import GameHandler
-from BoardOpperations import update_board, check_jump_required
+from BoardOpperations import update_board, check_jump_required, check_win
 from flask_cors import CORS
 import os
 
@@ -39,10 +39,16 @@ def request_next_move():
     if abs(move[0][0] - move[1][0]) == 2 and any([(item[0] == move[1] and abs(item[0][0] - item[1][0]) == 2) for item in gameHandler.get_possible_moves(board, player)]):
         return jsonify({'board': board, 'player': player, 'moves': gameHandler.get_possible_moves(board, player)})
 
+
     # update the player to the bot
     player = 1 if player == 2 else 2
 
-    time = 0.75
+    # check if this is a lost game
+    win = check_win(board, player)
+    if win != 0:
+        return jsonify({'board': board, 'player': player, 'moves': [], 'win': win})
+
+    time = 0.5
     if difficulty == "easy":
         ply = 1
     elif difficulty == "medium":
@@ -62,6 +68,7 @@ def request_next_move():
         search_info['eval'] = eval_
 
 
+
         # update the board with the move
         jumped = update_board(best_move[0], best_move[1], board)
 
@@ -69,11 +76,17 @@ def request_next_move():
         if jumped and check_jump_required(board, player, piece=best_move[1]):
             continue
 
+        # check if this is a lost game
+        win = check_win(board, 1 if player == 2 else 2)
+        if win != 0:
+            return jsonify({'board': board, 'player': 1 if player == 2 else 2, 'moves': [], 'searchInfo': search_info, 'win': win})
+
+
         # update the player to the human
         player = 1 if player == 2 else 2
         possible_moves = gameHandler.get_possible_moves(board, player)
 
-    return jsonify({'board': board, 'player': player, 'moves': possible_moves, 'searchInfo': search_info})
+    return jsonify({'board': board, 'player': player, 'moves': possible_moves, 'searchInfo': search_info, 'win': win})
 
 # Run Server
 if __name__ == '__main__':
