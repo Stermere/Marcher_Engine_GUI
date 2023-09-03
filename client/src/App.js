@@ -24,6 +24,7 @@ function App() {
   const [waitingOnServer, setWaitingOnServer] = useState(true);
   const [moveStack, setMoveStack] = useState([]);
   const [moveStackPointer, setMoveStackPointer] = useState(0);
+  const [win, setWin] = useState(0);
 
   document.body.style.backgroundColor = "lightblue";
 
@@ -51,6 +52,7 @@ function App() {
 
       setStartSquare(null);
       setMoveStackPointer(0);
+      setWin(0);
   }
 
   const undoMove = () => {
@@ -136,8 +138,10 @@ function App() {
         setBoard(data.board);
         setCurrentPlayer(data.player);
         setMoveTable(data.moves);
+        setWin(data.win);
         tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player })
         console.log(data.searchInfo)
+        console.log(data.win)
       })
       .catch(error => {
         // Handle any errors that occurred during the request
