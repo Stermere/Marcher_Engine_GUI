@@ -3,6 +3,7 @@ import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square } from './HelpfulFunctions.js'
 import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
 import CheckersRules from './CheckersRules.js';
+import WinBanner from './WinBanner.js';
 import './ToggleButtons.js'
 import './PieceAnimation.css'
 import './BackgroundColor.css'
@@ -141,7 +142,6 @@ function App() {
         setWin(data.win);
         tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player })
         console.log(data.searchInfo)
-        console.log(data.win)
       })
       .catch(error => {
         // Handle any errors that occurred during the request
@@ -308,6 +308,7 @@ function App() {
   
   return (
     <div className={`smooth-transition bg-${difficulty}`}>
+      <WinBanner winner={win} />
       {renderCheckerboard()} 
       <DifficultyToggleButtons difficulty={difficulty} setDifficulty={setDifficulty} />
       <GoBackOneMoveButton goBackOneMove={undoMove} goForwardOneMove={redoMove} />

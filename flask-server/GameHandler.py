@@ -14,12 +14,13 @@ class GameHandler:
         results = search_engine.search_position(p1, p2, p1k, p2k, player, p_time, ply)
 
         depth = results[-1][0]
-        leafs = results[-1][1]
-        eval_ = results[-1][3]
-        hashes = results[-1][2]
+        depth_extended = results[-1][1]
+        leafs = results[-1][2]
+        eval_ = results[-1][4]
+        hashes = results[-1][3]
         best_move = convert_bit_move(results[-2])
 
-        return best_move, depth, leafs, eval_, hashes
+        return best_move, depth, depth_extended, leafs, eval_, hashes
 
     def get_possible_moves(self, board, player):
         jump_required = check_jump_required(board, player)

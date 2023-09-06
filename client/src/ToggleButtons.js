@@ -1,24 +1,7 @@
 import * as React from 'react';
 import { ToggleButton, ToggleButtonGroup, Stack, Typography, ThemeProvider } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
-
-
-const theme = createTheme({
-  text: {
-    primary: {
-      main: '#a3c4c1',
-    },
-    secondary: {
-      main: '#b08787',
-    },
-  },
-  backgroundColor: {
-    'master': '#3d1212',
-    'hard': '#552e1f',
-    'medium': '#172538',
-    'easy': '#23421c',
-  },
-});
+import theme from './theme'; 
 
 function DifficultyToggleButtons({ difficulty, setDifficulty }) {
   const handleDifficulty = (event, newDifficulty) => {
