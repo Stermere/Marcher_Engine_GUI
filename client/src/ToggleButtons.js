@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { ToggleButton, ToggleButtonGroup, Stack, Typography, ThemeProvider } from '@mui/material';
-import { createTheme } from '@mui/material/styles';
 import theme from './theme'; 
 
 function DifficultyToggleButtons({ difficulty, setDifficulty }) {
@@ -20,7 +19,6 @@ function DifficultyToggleButtons({ difficulty, setDifficulty }) {
           size="medium"
           alignItems="center"
           onChange={handleDifficulty}
-
         >
           <ToggleButton value="easy" aria-label="left aligned" sx={{ borderWidth:'2px', }}>
               <Typography variant="h8" component="div" style={{ textTransform: 'none' }} color={theme.text.primary.main}>
