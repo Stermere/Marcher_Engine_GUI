@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Paper, Box } from '@mui/material';
-import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square } from './HelpfulFunctions.js'
+import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square, parse_engine_info } from './HelpfulFunctions.js'
 import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
 import CheckersRules from './CheckersRules.js';
 import WinBanner from './WinBanner.js';
@@ -26,6 +26,7 @@ function App() {
   const [moveStack, setMoveStack] = useState([]);
   const [moveStackPointer, setMoveStackPointer] = useState(0);
   const [win, setWin] = useState(0);
+  const [engineInfo, setEngineInfo] = useState("Depth ?/? Score ?");
 
   document.body.style.backgroundColor = "lightblue";
 
@@ -53,6 +54,7 @@ function App() {
 
       setStartSquare(null);
       setMoveStackPointer(0);
+      setEngineInfo("Depth ?/? Score ?");
       setWin(0);
   }
 
@@ -140,8 +142,8 @@ function App() {
         setCurrentPlayer(data.player);
         setMoveTable(data.moves);
         setWin(data.win);
-        tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player })
-        console.log(data.searchInfo)
+        tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player });
+        setEngineInfo(parse_engine_info(data.searchInfo));
       })
       .catch(error => {
         // Handle any errors that occurred during the request
@@ -308,7 +310,7 @@ function App() {
   
   return (
     <div className={`smooth-transition bg-${difficulty}`}>
-      <WinBanner winner={win} />
+      <WinBanner winner={win} startString={engineInfo} />
       {renderCheckerboard()} 
       <DifficultyToggleButtons difficulty={difficulty} setDifficulty={setDifficulty} />
       <GoBackOneMoveButton goBackOneMove={undoMove} goForwardOneMove={redoMove} />
