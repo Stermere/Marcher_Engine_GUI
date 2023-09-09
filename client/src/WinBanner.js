@@ -18,8 +18,6 @@ function WinBanner({ winner, startString }) {
     height: '5vh',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between', // To align items on the right and left
-    padding: '0 16px', // Add some padding to the Paper component
   };
 
   return (
@@ -27,7 +25,7 @@ function WinBanner({ winner, startString }) {
       <ThemeProvider theme={theme}>
         <Grid container alignItems="center" justifyContent="center" spacing={2}>
           <Grid item xs="auto">
-            <Typography variant="h5" color={theme.text.primary.main} textAlign="center">
+            <Typography variant="h7" color={theme.text.primary.main} textAlign="center">
               {text}
             </Typography>
           </Grid>
