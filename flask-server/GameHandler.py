@@ -2,6 +2,7 @@ import sys
 import os
 from BoardOpperations import Board, check_jump_required, update_board, check_win, check_tie, generate_all_options
 from BitboardConverter import convert_bit_move, convert_matrix_move, convert_to_bitboard, convert_to_matrix
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'build', 'lib.win-amd64-cpython-310')))
 import search_engine
 
 # handles the move generation and the engine that acts as the Computer Player
