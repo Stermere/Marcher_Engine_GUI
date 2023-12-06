@@ -13,8 +13,16 @@ const CheckersRules = () => {
           },
         },
     });
+
+  const rulesStyle = {
+      display: 'grid',
+      justifyContent: 'center',
+      alignItems: 'start',
+      height: '200vh',
+    };
+
   return (
-    <div style={{ display: 'grid', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+    <div style={rulesStyle}>
       <div>
         <Typography variant="h6" gutterBottom style={{ color: theme.text.primary.main }}>
           Rules of Checkers:

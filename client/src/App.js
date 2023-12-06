@@ -22,7 +22,7 @@ function App() {
   const [board, setBoard] = useState([]);
   const [moveTable, setMoveTable] = useState([]);
   const [difficulty, setDifficulty] = useState('easy');
-  const [waitingOnServer, setWaitingOnServer] = useState(true);
+  const [waitingOnServer, setWaitingOnServer] = useState(false);
   const [moveStack, setMoveStack] = useState([]);
   const [moveStackPointer, setMoveStackPointer] = useState(0);
   const [win, setWin] = useState(0);
@@ -82,11 +82,21 @@ function App() {
 
       
   const handleCellClick = (row, col) => {
-    if (convert_to_player_type(board[row][col]) === currentPlayer && is_valid_start_square({ row, col }, moveTable)) {
+    if (waitingOnServer) {
+      return;
+    }
+
+    if (convert_to_player_type(board[row][col]) === currentPlayer &&
+        is_valid_start_square({ row, col }, moveTable)) {
       setStartSquare({ col, row });
     }
     else if (startSquare !== null && is_valid_move(startSquare, { row, col }, moveTable)) {
       setEndSquare({ col, row });
+      setWaitingOnServer(true);
+    }
+    else if (!is_valid_start_square({ row, col }, moveTable) && moveTable.length > 1) {
+      setStartSquare(null);
+      setEndSquare(null);
     }
   };
 
@@ -117,7 +127,6 @@ function App() {
         }
       }
       newMoveTable.push([[-1, -1], [-1, -1]]);
-      setWaitingOnServer(true);
       setMoveTable(newMoveTable);
 
       const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
@@ -137,16 +146,15 @@ function App() {
       })
       .then(response => response.json())
       .then(data => {
-        // Handle the response data here
         setBoard(data.board);
         setCurrentPlayer(data.player);
         setMoveTable(data.moves);
         setWin(data.win);
         tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player });
         setEngineInfo(parse_engine_info(data.searchInfo));
+        setWaitingOnServer(false);
       })
       .catch(error => {
-        // Handle any errors that occurred during the request
         console.error('Error:', error);
       });
 
@@ -157,7 +165,6 @@ function App() {
       // Reset startSquare and endSquare after the move
       setStartSquare(null);
       setEndSquare(null);
-      setWaitingOnServer(false);
     }
 
 
@@ -307,6 +314,23 @@ function App() {
       </Box>
     ));
   };
+
+
+  useEffect(() => {
+    // Apply smooth scrolling to html, body, and document
+    document.documentElement.style.overflowY = 'scroll';
+    document.body.style.overflowY = 'scroll';
+    document.documentElement.style.WebkitOverflowScrolling = 'touch';
+    document.body.style.WebkitOverflowScrolling = 'touch';
+
+    // Cleanup effect on unmount
+    return () => {
+      document.documentElement.style.overflowY = 'auto';
+      document.body.style.overflowY = 'auto';
+      document.documentElement.style.WebkitOverflowScrolling = 'auto';
+      document.body.style.WebkitOverflowScrolling = 'auto';
+    };
+  }, []);
   
   return (
     <div className={`smooth-transition bg-${difficulty}`}>
