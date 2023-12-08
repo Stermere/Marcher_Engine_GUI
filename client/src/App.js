@@ -92,7 +92,6 @@ function App() {
     }
     else if (startSquare !== null && is_valid_move(startSquare, { row, col }, moveTable)) {
       setEndSquare({ col, row });
-      setWaitingOnServer(true);
     }
     else if (!is_valid_start_square({ row, col }, moveTable) && moveTable.length > 1) {
       setStartSquare(null);
@@ -128,10 +127,11 @@ function App() {
       }
       newMoveTable.push([[-1, -1], [-1, -1]]);
       setMoveTable(newMoveTable);
-
+      
       const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
-
+      
       // send the move to the server along with the current player and the board
+      setWaitingOnServer(true);
       fetch('/api/request_move', {
         method: 'POST',
         body: JSON.stringify({
@@ -146,13 +146,13 @@ function App() {
       })
       .then(response => response.json())
       .then(data => {
+        setWaitingOnServer(false);
         setBoard(data.board);
         setCurrentPlayer(data.player);
         setMoveTable(data.moves);
         setWin(data.win);
         tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player });
         setEngineInfo(parse_engine_info(data.searchInfo));
-        setWaitingOnServer(false);
       })
       .catch(error => {
         console.error('Error:', error);
@@ -174,7 +174,7 @@ function App() {
     if (moveTable.length <= 0) {
       return;
     }
-    if (is_only_option({ col:moveTable[0][0][0], row:moveTable[0][0][1] }, moveTable) && !waitingOnServer) {
+    if (is_only_option({ col:moveTable[0][0][0], row:moveTable[0][0][1] }, moveTable)) {
       setStartSquare({ col:moveTable[0][0][0], row:moveTable[0][0][1] });
     }
   }, [moveTable]);
