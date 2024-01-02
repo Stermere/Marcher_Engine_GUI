@@ -4,6 +4,9 @@ from BoardOpperations import update_board, check_jump_required, check_win
 from flask_cors import CORS
 import os
 
+STARTING_PLAYER = 1
+MASTER_MAX_TIME = 1 # seconds
+
 app = Flask(__name__, static_folder='../client/build', template_folder='../client/build')
 CORS(app)
 
@@ -21,8 +24,8 @@ def serve(path):
 @app.route("/api/get_board", methods=['GET'])
 def get_board():
     return jsonify({"board": gameHandler.get_start_board(),
-                    "player": 1,
-                    "moves": gameHandler.get_possible_moves(gameHandler.get_start_board(), 1)})
+                    "player": STARTING_PLAYER,
+                    "moves": gameHandler.get_possible_moves(gameHandler.get_start_board(), STARTING_PLAYER)})
 
 # Takes a board, player, and difficulty and returns the best move and a list of all possible moves 
 # that the player could make
@@ -48,7 +51,7 @@ def request_next_move():
     if win != 0:
         return jsonify({'board': board, 'player': player, 'moves': [], 'win': win})
 
-    time = 0.5
+    time = MASTER_MAX_TIME
     if difficulty == "easy":
         ply = 1
     elif difficulty == "medium":
