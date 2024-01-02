@@ -48,5 +48,9 @@ export function is_valid_start_square(startSquare, moveList) {
 
 // returns a formatted string of the engine info
 export function parse_engine_info(info) {
+    if (info === undefined) {
+        return "Depth: 0/0 Score: 0"
+    }
+
     return "Depth: " + info["depth"] + "/" + info["depthExtended"] + " Score: " + info["eval"]
 }
