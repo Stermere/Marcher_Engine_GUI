@@ -75,7 +75,7 @@ def request_next_move():
         # update the board with the move
         jumped = update_board(best_move[0], best_move[1], board)
 
-        # if the player just jumped, check if they can jump again and if so return the board
+        # if the player just jumped, check if they can jump again and if so make another move
         if jumped and check_jump_required(board, player, piece=best_move[1]):
             continue
 
