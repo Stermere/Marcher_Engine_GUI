@@ -39,7 +39,7 @@ def request_next_move():
     difficulty = data['difficulty']
     original_player = player
 
-    if abs(move[0][0] - move[1][0]) == 2 and any([(item[0] == move[1] and abs(item[0][0] - item[1][0]) == 2) for item in gameHandler.get_possible_moves(board, player)]):
+    if abs(move[0][0] - move[1][0]) == 2 and (board[move[0][0]][move[0][1]] > 2 or (move[1][1] != 0 and move[1][1] != 7)) and any([(item[0] == move[1] and abs(item[0][0] - item[1][0]) == 2) for item in gameHandler.get_possible_moves(board, player)]):
         return jsonify({'board': board, 'player': player, 'moves': gameHandler.get_possible_moves(board, player)})
 
 
