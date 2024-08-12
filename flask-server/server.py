@@ -12,6 +12,21 @@ CORS(app)
 
 gameHandler = GameHandler()
 
+def get_difficulty(difficulty):
+    time = MASTER_MAX_TIME
+    ply = 1
+    if difficulty == "easy":
+        ply = 1
+    elif difficulty == "medium":
+        ply = 3
+    elif difficulty == "hard":
+        ply = 8
+    elif difficulty == "master":
+        ply = 50
+
+    return time, ply
+
+
 # Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -35,42 +50,35 @@ def request_next_move():
 
     board = data['board']
     player = data['player']
+    print(data["move"])
     move = tuple(tuple(item.values()) for item in data['move'])
     difficulty = data['difficulty']
-    original_player = player
 
     if abs(move[0][0] - move[1][0]) == 2 and (board[move[0][0]][move[0][1]] > 2 or (move[1][1] != 0 and move[1][1] != 7)) and any([(item[0] == move[1] and abs(item[0][0] - item[1][0]) == 2) for item in gameHandler.get_possible_moves(board, player)]):
         return jsonify({'board': board, 'player': player, 'moves': gameHandler.get_possible_moves(board, player)})
 
 
-    # update the player to the bot
-    player = 1 if player == 2 else 2
+    # update the player if there is a move otherwise keep the player the same
+    if (move[0][0] != -1):
+        player = 1 if player == 2 else 2
+
+    origin_player = player
 
     # check if this is a lost game
     win = check_win(board, player)
     if win != 0:
         return jsonify({'board': board, 'player': player, 'moves': [], 'win': win})
 
-    time = MASTER_MAX_TIME
-    if difficulty == "easy":
-        ply = 1
-    elif difficulty == "medium":
-        ply = 3
-    elif difficulty == "hard":
-        ply = 8
-    elif difficulty == "master":
-        ply = 50
+    time, ply = get_difficulty(difficulty)
 
     search_info = {'depth': 0, 'depthExtended': 0, 'eval': 0}
 
     # get the move from the engine
-    while player == (1 if original_player == 2 else 2):
+    while player == origin_player:
         best_move, depth, depth_extended, leafs, eval_, hashes = gameHandler.get_move(board, player, time, ply)
         search_info['depth'] = depth
         search_info['depthExtended'] = depth_extended
         search_info['eval'] = eval_
-
-
 
         # update the board with the move
         jumped = update_board(best_move[0], best_move[1], board)
@@ -84,11 +92,10 @@ def request_next_move():
         if win != 0:
             return jsonify({'board': board, 'player': 1 if player == 2 else 2, 'moves': [], 'searchInfo': search_info, 'win': win})
 
-
         # update the player to the human
         player = 1 if player == 2 else 2
-        possible_moves = gameHandler.get_possible_moves(board, player)
 
+    possible_moves = gameHandler.get_possible_moves(board, player)
     return jsonify({'board': board, 'player': player, 'moves': possible_moves, 'searchInfo': search_info, 'win': win})
 
 # Run Server

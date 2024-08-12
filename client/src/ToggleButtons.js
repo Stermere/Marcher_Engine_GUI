@@ -46,22 +46,55 @@ function DifficultyToggleButtons({ difficulty, setDifficulty }) {
   );
 }
 
-function RestartGameButton({ restartGame }) {
+function RestartGameAndPlayMoveButton({ restartGame, playMove }) {
   return (
     <ThemeProvider theme={theme}>
-      <Stack direction="row" spacing={4} justifyContent="center" alignItems="center">
+      <Stack
+        direction="row"
+        spacing={4}
+        justifyContent="center"
+        alignItems="center"
+      >
         <ToggleButtonGroup
           value={null}
           exclusive
-          aria-label="text alignment"
+          aria-label="game actions"
           size="medium"
-          alignItems="center"
-          onChange={restartGame}
+          onChange={(event, newValue) => {
+            if (newValue === "restart") {
+              restartGame();
+            } else if (newValue === "playMove") {
+              playMove();
+            }
+          }}
         >
-          <ToggleButton value="restart" aria-label="centered" sx={{ borderWidth:'2px', }}>
-              <Typography variant="h8" component="div" style={{ textTransform: 'none' }} color={theme.text.primary.main}>
-                Restart Game
-              </Typography>
+          <ToggleButton
+            value="playMove"
+            aria-label="play move"
+            sx={{ borderWidth: '2px' }}
+          >
+            <Typography
+              variant="h8"
+              component="div"
+              style={{ textTransform: 'none' }}
+              color={theme.text.primary.main}
+            >
+              Play Move
+            </Typography>
+          </ToggleButton>
+          <ToggleButton
+            value="restart"
+            aria-label="restart"
+            sx={{ borderWidth: '2px' }}
+          >
+            <Typography
+              variant="h8"
+              component="div"
+              style={{ textTransform: 'none' }}
+              color={theme.text.primary.main}
+            >
+              Restart Game
+            </Typography>
           </ToggleButton>
         </ToggleButtonGroup>
       </Stack>
@@ -108,4 +141,4 @@ function GoBackOneMoveButton({ goBackOneMove, goForwardOneMove }) {
 }
 
 
-export { DifficultyToggleButtons, RestartGameButton, GoBackOneMoveButton };
+export { DifficultyToggleButtons, RestartGameAndPlayMoveButton as RestartGameButton, GoBackOneMoveButton};

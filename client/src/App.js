@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square, parse_engine_info } from './HelpfulFunctions.js'
-import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
+import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton, PlayMoveButton } from './ToggleButtons';
 import CheckersRules from './CheckersRules.js';
 import WinBanner from './WinBanner.js';
 import './ToggleButtons.js'
@@ -56,6 +56,51 @@ function App() {
       setMoveStackPointer(0);
       setEngineInfo("Depth ?/? Score ?");
       setWin(0);
+  }
+
+  const playMove = () => {
+    if (waitingOnServer || win !== 0) {
+      return;
+    }
+
+    const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
+
+    // send the move to the server along with the current player and the board
+    setWaitingOnServer(true);
+    fetch('/api/request_move', {
+      method: 'POST',
+      body: JSON.stringify({
+        board: board,
+        player: currentPlayer,
+        move: [{'col': -1, 'row': -1}, {'col': -1, 'row': -1}],
+        difficulty: difficulty
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      setWaitingOnServer(false);
+      setBoard(data.board);
+      setCurrentPlayer(data.player);
+      setMoveTable(data.moves);
+      setWin(data.win);
+      tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player });
+      setEngineInfo(parse_engine_info(data.searchInfo));
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+
+    // push to the move stack
+    setMoveStack(tempMoveStack);
+    setMoveStackPointer(moveStackPointer + 1);
+
+    // Reset startSquare and endSquare after the move
+    setStartSquare(null);
+    setEndSquare(null);
+    
   }
 
   const undoMove = () => {
@@ -180,7 +225,7 @@ function App() {
   }, [moveTable]);
 
   const renderAvaliablePiece = (rowIndex, colIndex, color) => {
-    const isValid = is_valid_start_square({ row:rowIndex, col:colIndex }, moveTable);
+    const isValid = is_valid_start_square({ row:rowIndex, col:colIndex }, moveTable) && (startSquare === null || (startSquare.row === rowIndex && startSquare.col === colIndex));
 
     return (
       <div
@@ -190,8 +235,8 @@ function App() {
           backgroundColor: color,
           opacity: .15,
           borderRadius: "50%",
-          height: isValid ? "50%" : "0%",
-          width: isValid ? "50%" : "0%", 
+          height: isValid ? "40%" : "0%",
+          width: isValid ? "40%" : "0%", 
           position: "absolute",
           top: "50%",
           left: "50%",
@@ -279,7 +324,7 @@ function App() {
       player1: '#bc3031',
       player2: '#00433c',
       pieceTransition: '#00233c',
-      pieceAvailableIndicator: '#ffee57',
+      pieceAvailableIndicator: '#1c0726',
       };
     return board.map((row, rowIndex) => (
       <Box alignItems="center" justifyContent="center" display="flex" key={rowIndex}>
@@ -338,7 +383,7 @@ function App() {
       {renderCheckerboard()} 
       <DifficultyToggleButtons difficulty={difficulty} setDifficulty={setDifficulty} />
       <GoBackOneMoveButton goBackOneMove={undoMove} goForwardOneMove={redoMove} />
-      <RestartGameButton restartGame={restartGame} />
+      <RestartGameButton restartGame={restartGame} playMove={playMove} />
       <CheckersRules />
     </div>
   );
