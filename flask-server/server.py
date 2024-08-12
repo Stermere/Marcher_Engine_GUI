@@ -50,7 +50,6 @@ def request_next_move():
 
     board = data['board']
     player = data['player']
-    print(data["move"])
     move = tuple(tuple(item.values()) for item in data['move'])
     difficulty = data['difficulty']
 
