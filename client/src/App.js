@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square, parse_engine_info } from './HelpfulFunctions.js'
-import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton, PlayMoveButton } from './ToggleButtons';
+import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
 import CheckersRules from './CheckersRules.js';
 import WinBanner from './WinBanner.js';
 import './ToggleButtons.js'
@@ -191,13 +191,15 @@ function App() {
       })
       .then(response => response.json())
       .then(data => {
-        setWaitingOnServer(false);
         setBoard(data.board);
         setCurrentPlayer(data.player);
         setMoveTable(data.moves);
         setWin(data.win);
         tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player });
         setEngineInfo(parse_engine_info(data.searchInfo));
+        setWaitingOnServer(false);
+        setStartSquare(null);
+        setEndSquare(null);
       })
       .catch(error => {
         console.error('Error:', error);
@@ -225,7 +227,7 @@ function App() {
   }, [moveTable]);
 
   const renderAvaliablePiece = (rowIndex, colIndex, color) => {
-    const isValid = is_valid_start_square({ row:rowIndex, col:colIndex }, moveTable) && (startSquare === null || (startSquare.row === rowIndex && startSquare.col === colIndex));
+    const isValid = is_valid_start_square({ row:rowIndex, col:colIndex }, moveTable) && !waitingOnServer && (startSquare === null || (startSquare.row === rowIndex && startSquare.col === colIndex));
 
     return (
       <div
