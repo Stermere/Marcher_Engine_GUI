@@ -4,13 +4,14 @@ import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_s
 import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
 import CheckersRules from './CheckersRules.js';
 import WinBanner from './WinBanner.js';
+import GitHubBanner from './GitHubBanner';
 import './ToggleButtons.js'
 import './PieceAnimation.css'
 import './BackgroundColor.css'
 import './IndicatorPiece.css'
 import './ValidPieceIndicator.css'
 
-import king from './king.png'; // with import
+import king from './king.png';
 
 function App() {
   const player1 = 1
@@ -28,9 +29,21 @@ function App() {
   const [win, setWin] = useState(0);
   const [engineInfo, setEngineInfo] = useState("Depth ?/? Score ?");
 
-  document.body.style.backgroundColor = "lightblue";
+  // Background color for each difficulty level
+  const difficultyColors = {
+    master: '#3d1212',
+    hard: '#552e1f',
+    medium: '#172538',
+    easy: '#23421c',
+  };
 
-  // setup the game to be new when the page loads
+  document.body.style.backgroundColor = difficultyColors[difficulty];
+
+  useEffect(() => {
+    document.body.style.backgroundColor = difficultyColors[difficulty];
+  }, [difficulty]);
+
+  // Setup the game to be new when the page loads
   useEffect(() => {
     fetch('/api/get_board')
       .then(response => response.json())
@@ -42,6 +55,7 @@ function App() {
       .catch(error => console.error('Error:', error));
   }, []);
 
+  // Reset the game to the initial state
   const restartGame = () => {
     fetch('/api/get_board')
       .then(response => response.json())
@@ -58,6 +72,7 @@ function App() {
       setWin(0);
   }
 
+  // Fetch a move for the current player from the server and update the board
   const playMove = () => {
     if (waitingOnServer || win !== 0) {
       return;
@@ -65,7 +80,7 @@ function App() {
 
     const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
 
-    // send the move to the server along with the current player and the board
+    // Send the move to the server along with the current player and the board
     setWaitingOnServer(true);
     fetch('/api/request_move', {
       method: 'POST',
@@ -93,7 +108,7 @@ function App() {
       console.error('Error:', error);
     });
 
-    // push to the move stack
+    // Push to the move stack
     setMoveStack(tempMoveStack);
     setMoveStackPointer(moveStackPointer + 1);
 
@@ -125,7 +140,6 @@ function App() {
     }
   };
 
-      
   const handleCellClick = (row, col) => {
     if (waitingOnServer) {
       return;
@@ -144,11 +158,11 @@ function App() {
     }
   };
 
+  // 
   useEffect(() => {
-    // if we have a startSquare and endSquare, then we have a move
-    // lets make the move and request the server to update the board
+    // If we have a startSquare and endSquare, a move has been made
     if (startSquare !== null && endSquare !== null) {
-      // update the board
+      // Update the board
       board[endSquare.row][endSquare.col] = board[startSquare.row][startSquare.col];
       board[startSquare.row][startSquare.col] = 0;
       if (Math.abs(startSquare.row - endSquare.row) === 2) {
@@ -163,7 +177,7 @@ function App() {
         board[endSquare.row][endSquare.col] = 4;
       }
 
-      // clear the move indicator from that square
+      // Clear the move indicator from that square
       const newMoveTable = [];
       for (let i = 0; i < moveTable.length; i++) {
         if (moveTable[i][0][0] !== startSquare.col || moveTable[i][0][1] !== startSquare.row) {
@@ -175,7 +189,7 @@ function App() {
       
       const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
       
-      // send the move to the server along with the current player and the board
+      // Send the move to the server along with the current player and the board
       setWaitingOnServer(true);
       fetch('/api/request_move', {
         method: 'POST',
@@ -205,7 +219,7 @@ function App() {
         console.error('Error:', error);
       });
 
-      // push to the move stack
+      // Push to the move stack
       setMoveStack(tempMoveStack);
       setMoveStackPointer(moveStackPointer + 1);
 
@@ -226,6 +240,7 @@ function App() {
     }
   }, [moveTable]);
 
+  // Renders a indicator over pieces that have a valid move
   const renderAvaliablePiece = (rowIndex, colIndex, color) => {
     const isValid = is_valid_start_square({ row:rowIndex, col:colIndex }, moveTable) && !waitingOnServer && (startSquare === null || (startSquare.row === rowIndex && startSquare.col === colIndex));
 
@@ -249,6 +264,7 @@ function App() {
     );
   };
 
+  // Renders an indicator over the destination square of a selected piece
   const renderMoveIndicator = (rowIndex, colIndex, color) => {
     const shouldRenderCircle = is_valid_move(startSquare, { row:rowIndex, col:colIndex }, moveTable);
 
@@ -380,13 +396,14 @@ function App() {
   }, []);
   
   return (
-    <div className={`smooth-transition bg-${difficulty}`}>
+    <div className={`smooth-transition bg-${difficulty}`} style={{ paddingBottom: '80px' }}>
       <WinBanner winner={win} startString={engineInfo} />
       {renderCheckerboard()} 
       <DifficultyToggleButtons difficulty={difficulty} setDifficulty={setDifficulty} />
       <GoBackOneMoveButton goBackOneMove={undoMove} goForwardOneMove={redoMove} />
       <RestartGameButton restartGame={restartGame} playMove={playMove} />
       <CheckersRules />
+      <GitHubBanner colorMap={difficultyColors} difficulty={difficulty} />
     </div>
   );
 }

@@ -34,10 +34,10 @@ function WinBanner({ winner, startString }) {
               variant="outlined"
               sx={{
                 '&.MuiToggleButton-root.Mui-selected': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.2)', // Set opacity to 20% when selected (on)
+                  backgroundColor: 'rgba(0, 0, 0, 0.2)',
                 },
                 '&.MuiToggleButton-root:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.1)', // Set opacity to 10% on hover
+                  backgroundColor: 'rgba(0, 0, 0, 0.1)',
                 },
               }}
               onClick={() => setShowEngineInfo(!showEngineInfo)}
