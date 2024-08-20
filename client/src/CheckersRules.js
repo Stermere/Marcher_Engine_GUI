@@ -18,7 +18,7 @@ const CheckersRules = () => {
       display: 'grid',
       justifyContent: 'center',
       alignItems: 'start',
-      height: '200vh',
+      height: '100%',
     };
 
   return (
