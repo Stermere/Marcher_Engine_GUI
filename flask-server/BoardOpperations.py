@@ -43,6 +43,16 @@ class Board: # class to store the board data and update it accordingly
         #              [0, 0, 0, 0, 0, 0, 0, 0],
         #              [0, 0, 0, 0, 0, 0, 0, 1],
         #              [0, 0, 0, 0, 0, 0, 0, 0]]
+
+        # Struggling solve
+        # self.board =[[0, 0, 0, 0, 0, 0, 0, 0],
+        #              [0, 0, 0, 0, 0, 0, 0, 0],
+        #              [0, 0, 0, 0, 0, 0, 0, 2],
+        #              [0, 0, 0, 0, 0, 0, 0, 0],
+        #              [0, 0, 0, 0, 0, 3, 0, 1],
+        #              [2, 0, 3, 0, 0, 0, 0, 0],
+        #              [0, 0, 0, 0, 0, 0, 0, 0],
+        #              [0, 0, 0, 0, 0, 0, 4, 0]]
                     
     def reset_board(self, p1 : object) -> None:
         self.__init__()

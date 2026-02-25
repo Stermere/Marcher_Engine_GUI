@@ -28,6 +28,7 @@ function App() {
   const [moveStackPointer, setMoveStackPointer] = useState(0);
   const [win, setWin] = useState(0);
   const [engineInfo, setEngineInfo] = useState("Depth ?/? Score ?");
+  var book = true;
 
   // Background color for each difficulty level
   const difficultyColors = {
@@ -70,6 +71,7 @@ function App() {
       setMoveStackPointer(0);
       setEngineInfo("Depth ?/? Score ?");
       setWin(0);
+      book = true
   }
 
   // Fetch a move for the current player from the server and update the board
@@ -88,7 +90,8 @@ function App() {
         board: board,
         player: currentPlayer,
         move: [{'col': -1, 'row': -1}, {'col': -1, 'row': -1}],
-        difficulty: difficulty
+        difficulty: difficulty,
+        book: book,
       }),
       headers: {
         'Content-Type': 'application/json'
@@ -101,6 +104,7 @@ function App() {
       setCurrentPlayer(data.player);
       setMoveTable(data.moves);
       setWin(data.win);
+      book = data.book;
       tempMoveStack.push({ board:structuredClone(data.board), moves:structuredClone(data.moves), player: data.player });
       setEngineInfo(parse_engine_info(data.searchInfo));
     })
@@ -197,7 +201,8 @@ function App() {
           board: board,
           player: currentPlayer,
           move: [startSquare, endSquare],
-          difficulty: difficulty
+          difficulty: difficulty,
+          book: book,
         }),
         headers: {
           'Content-Type': 'application/json'
@@ -214,6 +219,7 @@ function App() {
         setWaitingOnServer(false);
         setStartSquare(null);
         setEndSquare(null);
+        book = data.book;
       })
       .catch(error => {
         console.error('Error:', error);

@@ -50,11 +50,12 @@ def request_next_move():
 
     board = data['board']
     player = data['player']
+    book = data['book']
     move = tuple(tuple(item.values()) for item in data['move'])
     difficulty = data['difficulty']
 
     if abs(move[0][0] - move[1][0]) == 2 and (board[move[0][0]][move[0][1]] > 2 or (move[1][1] != 0 and move[1][1] != 7)) and any([(item[0] == move[1] and abs(item[0][0] - item[1][0]) == 2) for item in gameHandler.get_possible_moves(board, player)]):
-        return jsonify({'board': board, 'player': player, 'moves': gameHandler.get_possible_moves(board, player)})
+        return jsonify({'board': board, 'player': player, 'moves': gameHandler.get_possible_moves(board, player), 'book': book})
 
 
     # update the player if there is a move otherwise keep the player the same
@@ -74,7 +75,7 @@ def request_next_move():
 
     # get the move from the engine
     while player == origin_player:
-        best_move, depth, depth_extended, leafs, eval_, hashes = gameHandler.get_move(board, player, time, ply)
+        best_move, depth, depth_extended, leafs, eval_, hashes, book = gameHandler.get_move(board, player, time, ply, book)
         search_info['depth'] = depth
         search_info['depthExtended'] = depth_extended
         search_info['eval'] = eval_
@@ -89,13 +90,13 @@ def request_next_move():
         # check if this is a lost game
         win = check_win(board, 1 if player == 2 else 2)
         if win != 0:
-            return jsonify({'board': board, 'player': 1 if player == 2 else 2, 'moves': [], 'searchInfo': search_info, 'win': win})
+            return jsonify({'board': board, 'player': 1 if player == 2 else 2, 'moves': [], 'searchInfo': search_info, 'win': win, 'book': book})
 
         # update the player to the human
         player = 1 if player == 2 else 2
 
     possible_moves = gameHandler.get_possible_moves(board, player)
-    return jsonify({'board': board, 'player': player, 'moves': possible_moves, 'searchInfo': search_info, 'win': win})
+    return jsonify({'board': board, 'player': player, 'moves': possible_moves, 'searchInfo': search_info, 'win': win, 'book': book})
 
 # Run Server
 if __name__ == '__main__':
