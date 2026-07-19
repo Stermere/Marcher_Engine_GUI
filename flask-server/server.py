@@ -74,8 +74,9 @@ def request_next_move():
     search_info = {'depth': 0, 'depthExtended': 0, 'eval': 0}
 
     # get the move from the engine
+    forced = -1  # square of a piece mid multi-jump that must continue, -1 = none
     while player == origin_player:
-        best_move, depth, depth_extended, leafs, eval_, hashes, book = gameHandler.get_move(board, player, time, ply, book)
+        best_move, depth, depth_extended, leafs, eval_, hashes, book = gameHandler.get_move(board, player, time, ply, book, forced)
         search_info['depth'] = depth
         search_info['depthExtended'] = depth_extended
         search_info['eval'] = eval_
@@ -83,9 +84,12 @@ def request_next_move():
         # update the board with the move
         jumped = update_board(best_move[0], best_move[1], board)
 
-        # if the player just jumped, check if they can jump again and if so make another move
+        # if the player just jumped, check if they can jump again and if so make
+        # another move - the same piece must continue the jump
         if jumped and check_jump_required(board, player, piece=best_move[1]):
+            forced = best_move[1][0] + best_move[1][1] * 8
             continue
+        forced = -1
 
         # check if this is a lost game
         win = check_win(board, 1 if player == 2 else 2)

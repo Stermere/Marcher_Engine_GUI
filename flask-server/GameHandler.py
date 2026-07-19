@@ -3,18 +3,33 @@ import os
 import random
 from BoardOpperations import Board, check_jump_required, update_board, check_win, check_tie, generate_all_options
 from BitboardConverter import convert_bit_move, convert_matrix_move, convert_to_bitboard, convert_to_matrix
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'build', 'lib.win-amd64-cpython-310')))
+
+# engine build directory for the running python version (falls back to any local pyd)
+_build_dir = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), '..', '..', 'build',
+    f'lib.win-amd64-cpython-{sys.version_info.major}{sys.version_info.minor}'))
+sys.path.insert(0, _build_dir)
+
+# tell the engine where the endgame tablebase lives (local db/ next to the server
+# wins, otherwise the repo-root db/); must be set before the first search
+if 'CHECKERS_DB_DIR' not in os.environ:
+    _db_local = os.path.abspath(os.path.join(os.path.dirname(__file__), 'db'))
+    _db_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'db'))
+    os.environ['CHECKERS_DB_DIR'] = _db_local if os.path.isdir(_db_local) else _db_root
+
 import search_engine
 
 # handles the move generation and the engine that acts as the Computer Player
 class GameHandler:
     def __init__ (self):
         pass
-        
-    def get_move(self, board, player, p_time, ply, book):
+
+    def get_move(self, board, player, p_time, ply, book, forced=-1):
+        """forced: square index (0-63) of a piece mid multi-jump that must continue
+        jumping, or -1 for a normal position."""
         p1, p2, p1k, p2k = convert_to_bitboard(board)
 
-        if (book):
+        if book and forced < 0:
             best_move = self.get_book_move(board)
             if best_move != None:
                 depth = "book"
@@ -24,8 +39,8 @@ class GameHandler:
                 hashes = 0
 
                 return best_move, depth, depth_extended, leafs, eval_, hashes, True
-    
-        results = search_engine.search_position(p1, p2, p1k, p2k, player, p_time, ply)
+
+        results = search_engine.search_position(p1, p2, p1k, p2k, player, p_time, ply, forced)
         depth = results[-1][0]
         depth_extended = results[-1][1]
         leafs = results[-1][2]
