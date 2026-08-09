@@ -1,44 +1,57 @@
 # Marcher Engine GUI
 
-Welcome to the repository for **Marcher Engine GUI**—the sleek and dynamic website that showcases my advanced checkers engine! 🎉
+The web app for the [Marcher checkers engine](https://github.com/Stermere/Checkers-Engine).
 
-## Overview
+**[Play here](https://stermere.github.io/Marcher_Engine_GUI/)**
 
-Marcher Engine GUI is designed to present my checkers engine in an engaging and user-friendly way. Built with modern web technologies, this site provides a smooth and interactive experience for users to explore and play checkers.
+It is a static site. The engine is compiled to WebAssembly and runs in a web
+worker on your machine — there is no backend, and no move ever leaves the
+browser. The engine plays at about -50 Elo against Kingsrow 1.19e at 0.5s
+per move. (both engines configured to use a single thread and a 64 MB transposition table)
 
-## Key Features
+## Running it
 
-- **Interactive Checkers Board:** Play against the engine and see its strategic prowess in action.
-- **Dynamic Difficulty Levels:** Adjust the game’s challenge to match your skill level easily.
-- **User-Friendly Design:** Enjoy a clean and intuitive interface designed for an optimal user experience.
-
-## Setting up the environment
-
-To get started with the Marcher Engine GUI, clone the repository and run the following commands:
 ```bash
 git clone https://github.com/Stermere/Marcher_Engine_GUI
 cd Marcher_Engine_GUI/client
 npm install
-npm run build
+npm start
 ```
 
-You will also need to install the requirements for the backend:
-```bash
-cd ../flask-server
-python -m venv venv
-venv\Scripts\activate
-pyhton -m pip install -r requirements.txt
-```
+`npm start` talks to the **Flask server**, not WebAssembly — development stays
+pointed at the native engine, which is the one the engine repo tests and tunes
+against. Start it in another terminal:
 
-You can start the app with the following command:
 ```bash
-./start.ps1
-# or
+cd flask-server
+python -m venv venv && venv\Scripts\activate
+python -m pip install -r requirments.txt
 python server.py
 ```
 
-Finally, if you need to start the front end in development mode:
+To run the browser engine instead, build it in the engine repo, copy it in with
+`bash src/wasm/copy_to_gui.sh`, then:
+
 ```bash
-cd ../client
-npm start
+REACT_APP_ENGINE=wasm npm start
 ```
+
+## Testing
+
+```bash
+python tools/gen_boardops_trace.py --games 1000
+node tools/diff_boardops.mjs      # JS rules must match the Python rules exactly
+node tools/play_wasm_game.mjs     # full games against the real engine
+node tools/serve_build.mjs        # serve a production build the way Pages does
+```
+
+`src/engine/BoardOps.js` is a hand port of `flask-server/BoardOpperations.py`,
+so `diff_boardops.mjs` replays thousands of real games through both and demands
+the same answer at every node. Run it after touching the rules.
+
+## Deploying
+
+Pushing to `main` builds and publishes to GitHub Pages
+(`.github/workflows/pages.yml`). The WebAssembly engine and the endgame
+tablebase are pulled from the engine repo's release assets at build time, so
+they are never committed here.
