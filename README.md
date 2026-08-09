@@ -36,6 +36,27 @@ To run the browser engine instead, build it in the engine repo, copy it in with
 REACT_APP_ENGINE=wasm npm start
 ```
 
+## Desktop app
+
+An Electron wrapper around the same static build, for offline play. The endgame
+tablebase ships inside it, so there is nothing to download and the engine is at
+full strength the moment the window opens.
+
+```bash
+cd client && npm run build      # relative paths, wasm engine
+cd ../desktop && npm install
+npm start                       # run it
+npm run smoke                   # headless check that the engine actually boots
+npm run dist                    # installer in desktop/dist (~82 MB)
+```
+
+`electron-builder` targets NSIS on Windows, DMG on macOS and AppImage on Linux;
+each has to be built on its own platform.
+
+> If Electron exits with `Cannot read properties of undefined (reading 'isPackaged')`,
+> your shell has `ELECTRON_RUN_AS_NODE=1` set, which makes Electron behave as
+> plain Node. Run with `env -u ELECTRON_RUN_AS_NODE npm start`.
+
 ## Testing
 
 ```bash

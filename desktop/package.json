@@ -1,0 +1,58 @@
+{
+  "name": "marcher-engine-desktop",
+  "productName": "Marcher Engine",
+  "version": "1.0.0",
+  "description": "Play checkers against the Marcher engine, offline.",
+  "author": "Collin Kees <collin@kees.net>",
+  "license": "MIT",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "build-site": "cd ../client && npm run build",
+    "start": "electron .",
+    "smoke": "electron smoke.js",
+    "smoke:ci": "electron --no-sandbox --disable-gpu smoke.js",
+    "dist": "electron-builder",
+    "dist:dir": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.kees.marcher",
+    "directories": {
+      "output": "dist"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Stermere",
+        "repo": "Marcher_Engine_GUI"
+      }
+    ],
+    "files": [
+      "main.js",
+      "serve.js",
+      "package.json",
+      {
+        "from": "../client/build",
+        "to": "client-build"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "../client/public/logo512.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "../client/public/logo512.png",
+      "category": "public.app-category.games"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "../client/public/logo512.png",
+      "category": "Game"
+    }
+  }
+}

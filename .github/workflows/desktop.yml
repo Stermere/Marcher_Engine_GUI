@@ -1,0 +1,144 @@
+# Build the desktop app for all three platforms and attach the installers to a
+# GitHub release.
+#
+# Electron installers cannot be cross compiled in any way worth trusting, so
+# each one is built on its own runner. The three jobs publish into the same
+# draft release, which is created by whichever finishes first.
+#
+# Releases are deliberate: this runs on a version tag, or by hand. It does not
+# run on every push - a 3x250MB build for a README change helps nobody.
+#
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# The draft release is left DRAFT on purpose. Check the three installers are
+# attached, then publish it yourself.
+
+name: desktop
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write        # electron-builder attaches the installers to a release
+
+env:
+  ENGINE_REPO: Stermere/Checkers-Engine
+
+jobs:
+  build:
+    strategy:
+      # one platform failing should not throw away the other two, which take
+      # ten minutes each
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+          - os: macos-latest
+            name: macOS
+          - os: ubuntu-latest
+            name: Linux
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag matches the app version
+        # a tag that disagrees with package.json produces installers named after
+        # the version and a release named after the tag, which is confusing
+        # exactly once and then permanently
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          VER=$(node -p "require('./desktop/package.json').version")
+          if [ "$TAG" != "$VER" ]; then
+            echo "tag v$TAG != desktop/package.json version $VER" >&2
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch the browser engine
+        shell: bash
+        run: |
+          mkdir -p client/public/engine
+          curl -fsSL -o engine.tar.gz \
+            "https://github.com/${ENGINE_REPO}/releases/download/engine-latest/marcher-wasm.tar.gz"
+          tar -xzf engine.tar.gz -C client/public/engine
+
+      - name: Fetch the endgame tablebase
+        # Unlike the web build this is NOT optional. A downloaded app that has to
+        # reach the network to play well defeats the point of shipping one.
+        shell: bash
+        run: |
+          mkdir -p client/public/engine/db
+          curl -fsSL -o db.tar.gz \
+            "https://github.com/${ENGINE_REPO}/releases/download/db-latest/db.tar.gz"
+          tar -xzf db.tar.gz -C client/public/engine/db
+          echo "tablebase: $(ls client/public/engine/db/*.bin | wc -l) slices"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Index the tablebase
+        shell: bash
+        run: |
+          curl -fsSL -o make_db_manifest.py \
+            "https://raw.githubusercontent.com/${ENGINE_REPO}/main/src/wasm/make_db_manifest.py"
+          python make_db_manifest.py client/public/engine/db
+
+      - name: Build the site
+        # no PUBLIC_URL: the desktop build wants relative asset paths, because it
+        # is loaded from app:// rather than a subdirectory of a domain
+        shell: bash
+        run: npm ci && npm run build
+        working-directory: client
+        env:
+          REACT_APP_ENGINE: wasm
+          CI: 'false'      # CRA treats lint warnings as errors when CI is set
+
+      - name: Install electron-builder
+        run: npm ci
+        working-directory: desktop
+
+      - name: Verify the engine actually boots
+        # The only check that runs the worker, the wasm module and the tablebase
+        # together in a real Chromium.
+        #
+        # Two things the runner needs that a desktop does not: xvfb, because
+        # there is no display, and --no-sandbox, because the SUID sandbox helper
+        # is not installed setuid-root on hosted runners and Chromium aborts
+        # rather than silently running unsandboxed. The test only ever loads
+        # local files, so the sandbox is not protecting anything here.
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run --auto-servernum npm run smoke:ci
+        working-directory: desktop
+
+      - name: Build and publish
+        run: npx electron-builder --publish always
+        working-directory: desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # neither certificate exists, and without this macOS builds fail
+          # trying to discover a signing identity rather than shipping unsigned
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Keep the installers even if publishing did not happen
+        # workflow_dispatch runs have no tag, so there may be no release to
+        # attach to - the build is still worth downloading from the run
+        uses: actions/upload-artifact@v4
+        with:
+          name: marcher-${{ matrix.name }}
+          path: |
+            desktop/dist/*.exe
+            desktop/dist/*.dmg
+            desktop/dist/*.AppImage
+          if-no-files-found: ignore
