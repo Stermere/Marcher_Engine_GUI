@@ -11,6 +11,16 @@
 # production
 /build
 
+# engine build outputs: the wasm and the endgame tablebase. CI fetches these
+# from the Checkers-Engine release assets at build time; locally they are put
+# here by src/wasm/copy_to_gui.sh in that repo. Never commit them - the
+# tablebase alone is 18MB and the wasm must stay locked to the engine source
+# it was built from.
+/public/engine
+
+# differential test traces (regenerate with tools/gen_boardops_trace.py)
+/tools/*.jsonl
+
 # misc
 .DS_Store
 .env.local

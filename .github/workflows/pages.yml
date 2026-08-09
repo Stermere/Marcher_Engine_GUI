@@ -1,0 +1,118 @@
+# Build the static site and publish it to GitHub Pages.
+#
+# There is no server. The engine is a WebAssembly build fetched from the
+# Checkers-Engine release assets, and the rules run in the browser, so the whole
+# site is static files.
+#
+# One-time setup: repository Settings -> Pages -> Source = "GitHub Actions".
+
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  repository_dispatch:
+    # sent by Checkers-Engine's engine-wasm workflow when the engine changes
+    types: [engine-updated]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  ENGINE_REPO: Stermere/Checkers-Engine
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch the browser engine
+        # public release assets need no token, which keeps this workflow from
+        # needing any cross-repo credential
+        run: |
+          mkdir -p client/public/engine
+          curl -fsSL -o /tmp/marcher-wasm.tar.gz \
+            "https://github.com/${ENGINE_REPO}/releases/download/engine-latest/marcher-wasm.tar.gz"
+          tar -xzf /tmp/marcher-wasm.tar.gz -C client/public/engine
+          ls -la client/public/engine
+
+      - name: Fetch the endgame tablebase
+        # Optional by design: the engine plays fine without it and is only
+        # weaker in endings, so a missing asset must not fail the deploy.
+        run: |
+          mkdir -p client/public/engine/db
+          if curl -fsSL -o /tmp/db.tar.gz \
+               "https://github.com/${ENGINE_REPO}/releases/download/db-latest/db.tar.gz"; then
+            tar -xzf /tmp/db.tar.gz -C client/public/engine/db
+            echo "tablebase: $(ls client/public/engine/db/*.bin | wc -l) slices"
+          else
+            echo "no tablebase release asset - the site will run without it"
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Index the tablebase
+        # the browser fetches by manifest rather than probing for files, so a
+        # missing slice is never a 404 round trip
+        run: |
+          if ls client/public/engine/db/*.bin >/dev/null 2>&1; then
+            curl -fsSL -o /tmp/make_db_manifest.py \
+              "https://raw.githubusercontent.com/${ENGINE_REPO}/main/src/wasm/make_db_manifest.py"
+            python /tmp/make_db_manifest.py client/public/engine/db
+          else
+            echo '[]' > client/public/engine/db/manifest.json
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - run: npm ci
+        working-directory: client
+
+      - name: Check the rules port still matches the Python
+        # cheap, and it is the test that catches a subtle edit to BoardOps.js
+        run: |
+          python tools/gen_boardops_trace.py --games 200
+          node tools/diff_boardops.mjs
+        working-directory: client
+
+      - run: npm run build
+        working-directory: client
+        env:
+          # served from https://stermere.github.io/Marcher_Engine_GUI/
+          PUBLIC_URL: /Marcher_Engine_GUI
+          # explicit rather than relying on the NODE_ENV fallback in EngineClient.js
+          REACT_APP_ENGINE: wasm
+          # Actions sets CI=true, and CRA turns lint warnings into errors when it
+          # is set. This repo has pre-existing react-hooks/exhaustive-deps
+          # warnings, so without this the build fails on a warning.
+          CI: 'false'
+
+      - run: touch client/build/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: client/build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deployment

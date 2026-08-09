@@ -35,7 +35,7 @@ class Board: # class to store the board data and update it accordingly
         #             [0, 0, 0, 0, 0, 0, 3, 0]]
 
         # hard solve
-        #self.board = [[0, 3, 0, 0, 0, 0, 0, 3],
+        # self.board = [[0, 3, 0, 0, 0, 0, 0, 3],
         #              [0, 0, 0, 0, 0, 0, 0, 0],
         #              [0, 0, 0, 4, 0, 4, 0, 0],
         #              [0, 0, 0, 0, 0, 0, 0, 0],

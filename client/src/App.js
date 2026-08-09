@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Paper, Box } from '@mui/material';
 import { convert_to_player_type, is_valid_move, is_only_option, is_valid_start_square, parse_engine_info } from './HelpfulFunctions.js'
+import { createEngine } from './engine/EngineClient.js';
 import { DifficultyToggleButtons, GoBackOneMoveButton, RestartGameButton } from './ToggleButtons';
 import CheckersRules from './CheckersRules.js';
 import WinBanner from './WinBanner.js';
@@ -44,27 +45,40 @@ function App() {
     document.body.style.backgroundColor = difficultyColors[difficulty];
   }, [difficulty]);
 
+  // The engine. Either the Flask server or the WebAssembly build in a worker,
+  // chosen in EngineClient.js - development defaults to Flask, a production
+  // build to WebAssembly. Nothing below this line knows which one it got.
+  const engine = useRef(null);
+
+  const applyNewBoard = (data) => {
+    setBoard(data.board);
+    setMoveTable(data.moves);
+    setCurrentPlayer(data.player);
+    setMoveStack([{board:structuredClone(data.board), moves: data.moves, player: data.player}]);
+  };
+
   // Setup the game to be new when the page loads
   useEffect(() => {
-    fetch('/api/get_board')
-      .then(response => response.json())
-      .then(data => {setBoard(data.board);
-                    setMoveTable(data.moves);
-                    setCurrentPlayer(data.player);
-                    setMoveStack([{board:structuredClone(data.board), moves: data.moves, player: data.player}]);
-      })
+    const eng = createEngine();
+    engine.current = eng;
+
+    // the search reports each deepening iteration as it finishes, so the
+    // readout counts up during a long think instead of sitting blank
+    eng.onProgress = (p) => setEngineInfo(
+      "Depth: " + p.depth + "/" + p.ext + " Score: " + p.eval);
+
+    eng.getBoard()
+      .then(applyNewBoard)
       .catch(error => console.error('Error:', error));
+
+    return () => { eng.terminate(); engine.current = null; };
   }, []);
 
   // Reset the game to the initial state
   const restartGame = () => {
-    fetch('/api/get_board')
-      .then(response => response.json())
-      .then(data => {setBoard(data.board);
-                    setMoveTable(data.moves);
-                    setCurrentPlayer(data.player);
-                    setMoveStack([{board:structuredClone(data.board), moves: data.moves, player: data.player}]);
-      })
+    if (engine.current === null) return;
+    engine.current.getBoard()
+      .then(applyNewBoard)
       .catch(error => console.error('Error:', error));
 
       setStartSquare(null);
@@ -74,30 +88,22 @@ function App() {
       book = true
   }
 
-  // Fetch a move for the current player from the server and update the board
+  // Ask the engine to move for the current player and update the board
   const playMove = () => {
-    if (waitingOnServer || win !== 0) {
+    if (waitingOnServer || win !== 0 || engine.current === null) {
       return;
     }
 
     const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
 
-    // Send the move to the server along with the current player and the board
     setWaitingOnServer(true);
-    fetch('/api/request_move', {
-      method: 'POST',
-      body: JSON.stringify({
-        board: board,
-        player: currentPlayer,
-        move: [{'col': -1, 'row': -1}, {'col': -1, 'row': -1}],
-        difficulty: difficulty,
-        book: book,
-      }),
-      headers: {
-        'Content-Type': 'application/json'
-      }
+    engine.current.requestMove({
+      board: board,
+      player: currentPlayer,
+      move: [{'col': -1, 'row': -1}, {'col': -1, 'row': -1}],
+      difficulty: difficulty,
+      book: book,
     })
-    .then(response => response.json())
     .then(data => {
       setWaitingOnServer(false);
       setBoard(data.board);
@@ -165,7 +171,7 @@ function App() {
   // 
   useEffect(() => {
     // If we have a startSquare and endSquare, a move has been made
-    if (startSquare !== null && endSquare !== null) {
+    if (startSquare !== null && endSquare !== null && engine.current !== null) {
       // Update the board
       board[endSquare.row][endSquare.col] = board[startSquare.row][startSquare.col];
       board[startSquare.row][startSquare.col] = 0;
@@ -193,22 +199,15 @@ function App() {
       
       const tempMoveStack = moveStack.slice(0, moveStackPointer + 1);
       
-      // Send the move to the server along with the current player and the board
+      // Hand the move to the engine along with the current player and the board
       setWaitingOnServer(true);
-      fetch('/api/request_move', {
-        method: 'POST',
-        body: JSON.stringify({
-          board: board,
-          player: currentPlayer,
-          move: [startSquare, endSquare],
-          difficulty: difficulty,
-          book: book,
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+      engine.current.requestMove({
+        board: board,
+        player: currentPlayer,
+        move: [startSquare, endSquare],
+        difficulty: difficulty,
+        book: book,
       })
-      .then(response => response.json())
       .then(data => {
         setBoard(data.board);
         setCurrentPlayer(data.player);
