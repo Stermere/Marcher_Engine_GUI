@@ -51,7 +51,8 @@ npm run dist                    # installer in desktop/dist (~82 MB)
 ```
 
 `electron-builder` targets NSIS on Windows, DMG on macOS and AppImage on Linux;
-each has to be built on its own platform.
+each has to be built on its own platform. The `LICENSE` is bundled into the
+packaged app, which is what MIT asks for when you ship a binary.
 
 > If Electron exits with `Cannot read properties of undefined (reading 'isPackaged')`,
 > your shell has `ELECTRON_RUN_AS_NODE=1` set, which makes Electron behave as
@@ -76,3 +77,8 @@ Pushing to `main` builds and publishes to GitHub Pages
 (`.github/workflows/pages.yml`). The WebAssembly engine and the endgame
 tablebase are pulled from the engine repo's release assets at build time, so
 they are never committed here.
+
+## License
+
+MIT — see [LICENSE](LICENSE). The engine itself is MIT too, in
+[the engine repo](https://github.com/Stermere/Checkers-Engine).

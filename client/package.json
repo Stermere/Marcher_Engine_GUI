@@ -4,6 +4,8 @@
   "start_url": "/",
   "homepage": "./",
   "private": true,
+  "author": "Collin Kees <collin@kees.net>",
+  "license": "MIT",
   "proxy": "http://localhost:5000",
   "dependencies": {
     "@emotion/react": "^11.11.1",

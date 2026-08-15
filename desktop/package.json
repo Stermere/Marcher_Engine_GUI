@@ -38,6 +38,13 @@
       {
         "from": "../client/build",
         "to": "client-build"
+      },
+      {
+        "from": "..",
+        "to": ".",
+        "filter": [
+          "LICENSE"
+        ]
       }
     ],
     "win": {
